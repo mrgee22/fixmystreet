@@ -3,6 +3,7 @@ use Test::MockModule;
 use Test::MockTime qw(:all);
 use Test::Warn;
 use DateTime;
+use JSON::MaybeXS;
 use Test::Output;
 use FixMyStreet::TestMech;
 use FixMyStreet::SendReport::Open311;
@@ -1633,7 +1634,7 @@ subtest 'check direct debit reconcilliation' => sub {
     is $renewal_from_cc_sub->get_extra_field_value('LastPayMethod'), 3, 'correct echo payment method field';
 
     my $subsequent_renewal_from_cc_sub = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I7:3654321%' }
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "3654321" } ] }) },
         },
         {
             order_by => { -desc => 'id' }
@@ -1669,7 +1670,7 @@ subtest 'check direct debit reconcilliation' => sub {
     is $cancel_nothing_in_echo->state, 'hidden', 'hide already cancelled report';
 
     my $renewal = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I6:654322%' }
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "654322" } ] }) },
         },
         {
             order_by => { -desc => 'id' }
@@ -1686,7 +1687,7 @@ subtest 'check direct debit reconcilliation' => sub {
     is $p->state, 'confirmed';
 
     my $renewal_too_recent = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I6:654329%' }
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "654329" } ] }) },
         },
         {
             order_by => { -desc => 'id' }
@@ -1694,12 +1695,14 @@ subtest 'check direct debit reconcilliation' => sub {
     );
     is $renewal_too_recent->count, 0, "ignore payments less that three days old";
 
-    my $cancel = FixMyStreet::DB->resultset('Problem')->search({ extra => { like => '%uprn,T5:value,I6:654323%' } }, { order_by => { -desc => 'id' } });
+    my $cancel = FixMyStreet::DB->resultset('Problem')->search({
+        extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "654323" } ] }) },
+    }, { order_by => { -desc => 'id' } });
     is $cancel->count, 1, "one record for cancel property";
     is $cancel->first->id, $sub_for_cancel->id, "only record is the original one, no cancellation report created";
 
     my $processed = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I6:654324%' }
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "654324" } ] }) },
         },
         {
             order_by => { -desc => 'id' }
@@ -1708,7 +1711,7 @@ subtest 'check direct debit reconcilliation' => sub {
     is $processed->count, 2, "two records for processed renewal property";
 
     my $ad_hoc_processed_rs = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I6:654326%' }
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => "654326" } ] }) },
         },
         {
             order_by => { -desc => 'id' }

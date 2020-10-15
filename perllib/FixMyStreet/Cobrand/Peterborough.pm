@@ -394,7 +394,10 @@ TODO: Are these small enough to be here or should they be in a Role?
 
 sub munge_around_category_where {
     my ($self, $where) = @_;
-    $where->{extra} = [ undef, { -not_like => '%T10:waste_only,I1:1%' } ];
+    $where->{'-or'} = [
+        extra => undef,
+        -not => { extra => { '@>' => '{"waste_only":1}' } }
+    ];
 }
 
 sub munge_reports_category_list {

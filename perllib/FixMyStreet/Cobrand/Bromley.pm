@@ -499,7 +499,10 @@ sub report_sent_confirmation_email {
 
 sub munge_around_category_where {
     my ($self, $where) = @_;
-    $where->{extra} = [ undef, { -not_like => '%Waste%' } ];
+    $where->{'-or'} = [
+        extra => undef,
+        -not => { extra => { '@>' => '{"group":["Waste"]}' } }
+    ];
 }
 
 sub munge_reports_category_list {
@@ -1461,9 +1464,8 @@ sub waste_reconcile_direct_debits {
 
         (my $uprn = $payer) =~ s/^GGW//;
 
-        my $len = length($uprn);
         my $rs = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I' . $len . ':'. $uprn . '%' },
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => $uprn } ] }) },
         },
         {
                 order_by => { -desc => 'created' }
@@ -1598,9 +1600,8 @@ sub waste_reconcile_direct_debits {
 
         my $payer = $payment->{Reference};
         (my $uprn = $payer) =~ s/^GGW//;
-        my $len = length($uprn);
         my $rs = FixMyStreet::DB->resultset('Problem')->search({
-            extra => { like => '%uprn,T5:value,I' . $len . ':'. $uprn . '%' },
+            extra => { '@>' => encode_json({ _fields => [ { name => "uprn", value => $uprn } ] }) },
         }, {
             order_by => { -desc => 'created' }
         })->to_body( $self->body );
