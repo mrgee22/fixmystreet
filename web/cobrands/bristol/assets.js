@@ -6,8 +6,8 @@ if (!fixmystreet.maps) {
 
 var base_options = {
     max_resolution: {
-	'bristol': 0.33072982812632296,
-	'fixmystreet': 4.777314267158508
+        'bristol': 0.33072982812632296,
+        'fixmystreet': 4.777314267158508
     },
     body: "Bristol City Council",
     geometryName: 'SHAPE'
@@ -24,8 +24,8 @@ var options = $.extend(true, {}, base_options, {
     propertyNames: [ 'COD_ASSET_ID', 'COD_USRN', 'SHAPE' ],
     filter_key: 'COD_ASSET_TYPE',
     attributes: {
-	asset_id: 'COD_ASSET_ID',
-	usrn: 'COD_USRN'
+        asset_id: 'COD_ASSET_ID',
+        usrn: 'COD_USRN'
     }
 });
 
