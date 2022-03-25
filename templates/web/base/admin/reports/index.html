@@ -14,6 +14,20 @@
         <th>[% loc('Name') %]</th>
         <th>[% loc('Body') %]</th>
         <th>[% loc('State') %]</th>
+        [% IF cobrand.moniker == 'cheshireeast' %]
+        <th>
+            <form method="get" action="reports" enctype="application/x-www-form-urlencoded" accept-charset="utf-8">
+            <select name="assignee" onchange="this.form.submit()">
+                [% IF !selected_assignee %]<option disabled selected>Assignee</option>[% END %]
+                <option value="All" [%~ IF selected_assignee == 'All' ~%]selected[% END %]>All</option>
+                <option value="Unassigned" [%~ IF selected_assignee == 'Unassigned' ~%]selected[% END %]>Unassigned</option>
+                [% FOR assignee IN assignees ~%]
+                    <option value="[%~ assignee.key ~%]" [%~ IF selected_assignee == assignee.key ~%]selected[% END %]>[%~ assignee.value ~%]</option>
+                [% END %]
+            </select>
+            </form>
+        </th>
+        [% END %]
         <th>*</th>
     </tr>
     [% INCLUDE 'admin/problem_row.html' %]

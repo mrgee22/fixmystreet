@@ -97,6 +97,23 @@ FixMyStreet::override_config {
         $mech->content_lacks('Odour');
     };
 
+    subtest 'not opted in cobrand does not show assignee filter on admin/reports page' => sub {
+        my $bexley = $mech->create_body_ok(2494, 'London Borough of Bexley');
+        my $admin_user = $mech->create_user_ok('adminuser@example.com', name => 'An admin user', from_body => $bexley, is_superuser => 1);
+        $mech->create_problems_for_body( 1, $bexley->id, 'Assignee', {
+        category => 'Zebra Crossing',
+        extra => {
+            contributed_as => 'another_user',
+            contributed_by => $admin_user->id,
+            },
+        });
+        $mech->log_in_ok($admin_user->email);
+        $mech->get_ok('/admin/reports');
+        my $header_count = my @headers = $mech->content =~ /<th>/g;
+        is $header_count, 6, "No additional column in header";
+        $mech->delete_problems_for_body($bexley->id);
+    };
+
     my $report;
     foreach my $test (
         { category => 'Abandoned and untaxed vehicles', email => ['p1confirm'], code => 'ConfirmABAN',

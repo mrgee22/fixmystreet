@@ -53,6 +53,17 @@ sub index : Path {
 
     my $problems = $c->cobrand->problems;
 
+    if ($c->cobrand->moniker =~ 'cheshireeast') {
+        my $planned_reports = $problems->search(
+            {},
+            {
+                join => 'user_planned_reports',
+            });
+
+        my %assignees = map { $_->shortlisted_user->id => $_->shortlisted_user->name } grep { $_->shortlisted_user } $planned_reports->search;
+        $c->stash->{assignees} = \%assignees;
+    };
+
     if (my $search = $c->get_param('search')) {
         $search = $self->trim($search);
 
@@ -152,7 +163,26 @@ sub index : Path {
             $c->stash->{updates} = [ $updates->all ];
             $c->stash->{updates_pager} = $updates->pager;
         }
-
+    } elsif (my $selected_assignee = $c->get_param('assignee')) {
+        $c->stash->{selected_assignee} = $selected_assignee;
+        my $query = {};
+        if ($selected_assignee =~ 'Unassigned') {
+            $query = {"user_planned_reports.user_id" => undef };
+        } elsif ($selected_assignee =~ /^\d+$/) {
+            $query = {"user_planned_reports.user_id" => $selected_assignee};
+        };
+        $problems = $problems->search(
+            $query,
+            {
+                '+columns' => ['user.email'],
+                join => ['user_planned_reports', 'user'],
+                prefetch => 'contact',
+                order_by => $order,
+                rows => 50
+                }
+            )->page( $p_page );
+        $c->stash->{problems} = [ $problems->all ];
+        $c->stash->{problems_pager} = $problems->pager;
     } else {
 
         $problems = $problems->search(
