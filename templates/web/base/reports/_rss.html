@@ -16,6 +16,10 @@
         %]</a></li>
         [% IF children.size %]
             [% IF c.cobrand.moniker.match('oxfordshire') %]
+                [% area_text = 'View area reports' %]
+                [% district_text = 'District reports' %]
+                [% ward_text = 'Division reports' %]
+                [% parish_text = 'Parish reports' %]
                 <li class="area-report"><a href="#council_wards" id="key-tool-area" class="chevron">[% area_text %]</a></li>
                 <li class="sub-area-item"><a href="#council_wards" id="key-tool-wards" class="chevron">[% ward_text %]</a></li>
                 <li class="sub-area-item"><a href="#council_parish" id="key-tool-parish" class="chevron">[% parish_text %]</a></li>
