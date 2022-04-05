@@ -26,13 +26,14 @@ a:focus,
 
 #site-header {
     background-color: $nav_background_colour;
+    padding: 10px 0;
 }
 
 #site-logo {
-    width: 150px;
+    width: 272px;
     // height: 61px; // see below
-    background-size: 150px 45px;
-    background-image: url("/cobrands/shropshire/images/sc-logo-v3.png");
+    background-size: 272px auto;
+    @include svg-background-image('images/peabody_logo');
 
     // text-indent doesn’t play nicely with focus outline,
     // so use padding overflow trick instead
