@@ -9,7 +9,7 @@ a,
 .fake-link {
     &:hover,
     &:active {
-        color: $shropshire-dark-grey;
+        color: $peabody-dark-grey;
     }
 }
 
@@ -17,7 +17,7 @@ a:focus,
 .fake-link:focus,
 #nav-link.focussed,
 .olButton:focus {
-    outline: solid 3px $shropshire-yellow;
+    outline: solid 3px $peabody-orange;
 }
 
 .olButton:focus {
@@ -25,7 +25,7 @@ a:focus,
 }
 
 #site-header {
-    border-bottom: solid 3px $shropshire-dark-blue;
+    background-color: $nav_background_colour;
 }
 
 #site-logo {
@@ -42,9 +42,9 @@ a:focus,
     overflow: hidden;
 }
 
-.shropshire-footer {
-    background: $shropshire-dark-grey;
-    border-bottom: solid 1px $shropshire-mid-grey;
+.peabody-footer {
+    background: $peabody-dark-grey;
+    border-bottom: solid 1px $peabody-mid-grey;
     color: #fff;
     padding: 1.5em 0;
 
@@ -79,12 +79,12 @@ a:focus,
             background: transparent;
 
             input#pc {
-                @include shropshire-form-input($margin: 0 0.5em 0 0, $padding: 5px 0.5em);
+                @include peabody-form-input($margin: 0 0.5em 0 0, $padding: 5px 0.5em);
                 font-size: 1.25em;
             }
 
             input#sub {
-                @include shropshire-button-primary();
+                @include peabody-button-primary();
                 font-size: 1.25em;
             }
         }
@@ -96,22 +96,22 @@ a:focus,
 }
 
 a#geolocate_link {
-    @include shropshire-button-secondary();
+    @include peabody-button-secondary();
 }
 
 h1 {
-    color: $shropshire-mid-grey;
+    color: $peabody-mid-grey;
     font-size: 2em;
     line-height: 1.25em;
     font-weight: bold;
 }
 
 label {
-    @include shropshire-form-label();
+    @include peabody-form-label();
 }
 
 .form-control {
-    @include shropshire-form-input();
+    @include peabody-form-input();
 
     .form-txt-submit-box & {
         margin: 0 0 0.5em 0;
@@ -119,7 +119,7 @@ label {
 }
 
 .multi-select-button {
-    // Focus style, copied from shropshire-form-input() mixin
+    // Focus style, copied from peabody-form-input() mixin
     &:focus {
         outline: none;
         border: 1px solid #52A8EC;
@@ -150,11 +150,11 @@ p.form-error {
 
 .btn,
 .green-btn {
-    @include shropshire-button-primary();
+    @include peabody-button-primary();
 }
 
 #front_stats {
-    color: $shropshire-blue;
+    color: $peabody-teal;
     background: transparent;
 }
 
@@ -191,11 +191,11 @@ body.twothirdswidthpage .content .sticky-sidebar {
 }
 
 .item-list__item--empty {
-    color: $shropshire-mid-grey;
+    color: $peabody-mid-grey;
 }
 
 .box-warning {
-    background-color: mix($shropshire-yellow, #fff, 15%);
+    background-color: mix($peabody-orange, #fff, 15%);
 }
 
 @import "../fixmystreet-uk-councils/societyworks-footer";

@@ -4,33 +4,37 @@ $container-max-width: 1024px;
 
 /* COLOURS */
 
-$shropshire-blue: #007DB8; // primary brand colour
-$shropshire-royal-blue: #2266CA; // links
-$shropshire-pale-blue: #87CEEB; // footer links
-$shropshire-dark-blue: #005785; // CTA buttons in header/nav
-$shropshire-green: #008A0E; // CTA buttons in body content
-$shropshire-mid-grey: #555555; // headings and paragraphs
-$shropshire-dark-grey: #2C2C2C; // focussed button bg, hovered primary button bg
-$shropshire-yellow: #EEB92A; // focus outlines
-$shropshire-red: #D43531; // destructive actions
+$peabody-teal: #009baa; // Primary colour
+$peabody-blue: #5cb4e6; // FILL IT UP
+$peabody-green: #008A0E; // FILL IT UP
+$peabody-red: #fc1429; // FILL IT UP
+$peabody-orange: #ff8026;
+$peabody-brick: #a45248;
+$peabody-brick-d1: #b3460f; // Links
+$peabody-purple: #963683;
+$peabody-white: #fff;
 
-$primary: $shropshire-blue;
-$primary_b: #000000;
-$primary_text: $shropshire-mid-grey;
+$peabody-mid-grey: #555555; // headings and paragraphs
+$peabody-dark-grey: #37424a; // focussed button bg, hovered primary button bg
+
+
+$primary: $peabody-teal;
+$primary_b: #333; 
+$primary_text: $peabody-mid-grey;
 
 $base_bg: #f4f4f4;
-$base_fg: $shropshire-mid-grey;
+$base_fg: $peabody-mid-grey;
 
-$nav_background_colour: $shropshire-blue;
-$nav_colour: #fff;
-$nav_hover_background_colour: $shropshire-dark-blue;
+$nav_background_colour: $peabody-white;
+$nav_colour: $peabody-brick-d1;
+$nav_hover_background_colour: $peabody-brick;
 
 $header-top-border: false;
 
 // Colour used for front page 'how to report a problem' steps
-$col_big_numbers: $shropshire-blue;
+$col_big_numbers: $peabody-blue;
 
-$col_click_map: $shropshire-blue;
+$col_click_map: $peabody-blue;
 
 $body-font: 'myriad-pro', 'Helvetica Neue', Arial, Helvetica, 'Segoe UI', sans-serif;
 $heading-font: $body-font;
@@ -38,7 +42,7 @@ $meta-font: $body-font;
 
 $mappage-header-height: 64px;
 
-@mixin shropshire-form-input($margin: 0.5em 0, $padding: 5px) {
+@mixin peabody-form-input($margin: 0.5em 0, $padding: 5px) {
     margin: $margin;
     padding: $padding;
     border: 1px solid #bbb;
@@ -52,12 +56,12 @@ $mappage-header-height: 64px;
     }
 }
 
-@mixin shropshire-form-label() {
+@mixin peabody-form-label() {
     color: #555;
     font-weight: 700;
 }
 
-@mixin shropshire-button-primary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
+@mixin peabody-button-primary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
     border: none;
     font-weight: normal;
 
@@ -66,45 +70,45 @@ $mappage-header-height: 64px;
     line-height: $line-height;
     padding: $padding;
     border-radius: 4px;
-    border: 2px solid $shropshire-green;
-    background: $shropshire-green;
+    border: 2px solid $peabody-green;
+    background: $peabody-green;
     color: #fff !important;
 
     &:focus {
-        border: 2px solid $shropshire-dark-grey;
-        background: $shropshire-dark-grey;
+        border: 2px solid $peabody-dark-grey;
+        background: $peabody-dark-grey;
         color: #fff !important;
-        outline: solid 3px $shropshire-yellow;
+        outline: solid 3px $peabody-orange;
     }
 
     &:hover {
-        border: 2px solid $shropshire-dark-grey;
-        background: $shropshire-dark-grey;
+        border: 2px solid $peabody-dark-grey;
+        background: $peabody-dark-grey;
         color: #fff !important;
     }
 }
 
-@mixin shropshire-button-secondary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
+@mixin peabody-button-secondary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
     font-weight: normal;
 
     text-align: center;
     font-size: $font-size;
     line-height: $line-height;
     padding: $padding;
-    border: 2px solid $shropshire-dark-blue;
+    border: 2px solid $peabody-blue;
     border-radius: 4px;
-    background: $shropshire-dark-blue;
+    background: $peabody-blue;
     color: #fff !important;
 
     &:focus {
-        background: $shropshire-dark-grey;
-        border: 2px solid $shropshire-dark-grey;
+        background: $peabody-dark-grey;
+        border: 2px solid $peabody-dark-grey;
         color: #fff !important;
-        outline: solid 3px $shropshire-yellow;
+        outline: solid 3px $peabody-orange;
     }
 
     &:hover {
         background: #fff !important;
-        color: $shropshire-dark-blue !important;
+        color: $peabody-blue !important;
     }
 }
