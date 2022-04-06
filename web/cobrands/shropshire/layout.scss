@@ -1,23 +1,51 @@
 @import "_colours";
+@import "./_mixins";
 @import "../sass/layout";
 
+@import url(//hello.myfonts.net/count/344b63);
+
 body {
-    background-color: $primary;
+    background-color: $peabody-teal-l1;
 }
 
+$header-height: 81px;
 #site-header {
     padding: 10px 0;
+    box-shadow: 0 -4px 4px 8px rgba(0, 0, 0,0.1);
+}
+
+#map_sidebar {
+    top: $header-height;
+    .mappage & {
+        top: 64px;
+    }
+}
+
+#main-nav {
+    min-height: $header-height;
+    .mappage & {
+        min-height: 61px;
+    }
 }
 
 #site-logo {
     width: 272px;
     padding-top: 61px;
+    .mappage & {
+        top: -5px;
+        padding-top: 61px;
+        width: 230px;
+        padding-top: 53px;
+    }
 }
 
-.nav-wrapper {
-    //This centers align the content
-    top: 10px;
-}
+// .nav-wrapper {
+//     //This centers align the content
+//     top: 10px;
+//     .mappage & {
+//         top: 0;
+//     }
+// }
 
 .nav-menu--main {
     // remove special styling for this nav item
@@ -30,10 +58,16 @@ body {
         }
     }
 
-    span.report-a-problem-btn {
+    // Active state
+    span, span.report-a-problem-btn {
         color: $peabody-brick-d1;
         background-color: $peabody-white;
-        border-bottom: 1.5px solid $peabody-brick-d1;
+        border-bottom: 1.5px solid $peabody-orange;
+        border
+
+        &:hover {
+            color: $nav_colour;
+        }
     }
 
     a,
@@ -69,7 +103,7 @@ body {
     // Add right border
     li {
         &:nth-child(2), &:nth-child(3), &:nth-child(4) {
-            a, span {
+            a {
                 position: relative;
                 &:before {
                     content: "";
@@ -88,6 +122,7 @@ body {
 
 #front-main {
     margin: 0 auto;
+    margin-top: 75px;
     padding: 0 1em;
     max-width: $container-max-width;
     background: transparent;
@@ -96,6 +131,10 @@ body {
         max-width: none;
         background: #fff;
         padding: 4%;
+
+        h1 {
+            color: $primary;
+        }
     }
 
     #postcodeForm {
@@ -109,6 +148,7 @@ body {
 
 .content {
     padding: 4%;
+    color: $primary_b;
 }
 
 h1 {

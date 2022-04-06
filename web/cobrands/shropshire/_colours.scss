@@ -5,7 +5,10 @@ $container-max-width: 1024px;
 /* COLOURS */
 
 $peabody-teal: #009baa; // Primary colour
-$peabody-blue: #5cb4e6; // FILL IT UP
+$peabody-teal-l1: #93D2D7; 
+$peabody-teal-l2: #e2fafc;
+$peabody-blue: #5cb4e6;
+$peabody-blue-d1: #1c78ad; // FILL IT UP
 $peabody-green: #008A0E; // FILL IT UP
 $peabody-red: #fc1429; // FILL IT UP
 $peabody-orange: #ff8026;
@@ -34,7 +37,7 @@ $nav_hover_background_colour: $peabody-brick;
 $header-top-border: false;
 
 // Colour used for front page 'how to report a problem' steps
-$col_big_numbers: $peabody-blue;
+$col_big_numbers: $peabody-blue-d1;
 
 $col_click_map: $peabody-blue;
 
@@ -46,78 +49,7 @@ $mappage-header-height: 64px;
 
 /* VARIABLES */
 
-// Variables
 $heading-font: itc-avant-garde-gothic-pro, sans-serif;
 $body-font: Arial, Helvetica, sans-serif;
 $border-radius: 5px;
-
-@mixin peabody-form-input($margin: 0.5em 0, $padding: 5px) {
-    margin: $margin;
-    padding: $padding;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    box-shadow: none;
-
-    &:focus {
-        outline: none; // hide browser default outline, to match screenshot in branding guidelines
-        border: 1px solid #52A8EC;
-        box-shadow: 0 1px 3px #000, 0 0 8px #52A8EC;
-    }
-}
-
-@mixin peabody-form-label() {
-    color: #555;
-    font-weight: 700;
-}
-
-@mixin peabody-button-primary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
-    border: none;
-    font-weight: normal;
-
-    text-align: center;
-    font-size: $font-size;
-    line-height: $line-height;
-    padding: $padding;
-    border-radius: 4px;
-    border: 2px solid $peabody-green;
-    background: $peabody-green;
-    color: #fff !important;
-
-    &:focus {
-        border: 2px solid $peabody-dark-grey;
-        background: $peabody-dark-grey;
-        color: #fff !important;
-        outline: solid 3px $peabody-orange;
-    }
-
-    &:hover {
-        border: 2px solid $peabody-dark-grey;
-        background: $peabody-dark-grey;
-        color: #fff !important;
-    }
-}
-
-@mixin peabody-button-secondary($padding: 0.33em 1em, $font-size: 1em, $line-height: 1.5em) {
-    font-weight: normal;
-
-    text-align: center;
-    font-size: $font-size;
-    line-height: $line-height;
-    padding: $padding;
-    border: 2px solid $peabody-blue;
-    border-radius: 4px;
-    background: $peabody-blue;
-    color: #fff !important;
-
-    &:focus {
-        background: $peabody-dark-grey;
-        border: 2px solid $peabody-dark-grey;
-        color: #fff !important;
-        outline: solid 3px $peabody-orange;
-    }
-
-    &:hover {
-        background: #fff !important;
-        color: $peabody-blue !important;
-    }
-}
+$box-background-colour: mix($primary, $peabody-white, 15%);
