@@ -5,6 +5,10 @@
 @import "../sass/base";
 @import "cookies";
 
+body {
+    background-color: $primary;
+}
+
 a,
 .fake-link {
     &:hover,
@@ -20,26 +24,36 @@ a:focus,
     outline: solid 3px $peabody-orange;
 }
 
+#nav-link {
+   background: transparent url("data:image/svg+xml,%3Csvg fill='none' height='12' viewBox='0 0 18 12' width='18' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m18 12h-18v-2h18zm0-5h-18v-2h18zm0-5h-18v-2h18z' fill='%23037c88'/%3E%3C/svg%3E") center center no-repeat;
+   background-size: 25px;
+}
+
+html.js-nav-open #nav-link {
+    background: transparent url("data:image/svg+xml,%3Csvg fill='none' height='15' viewBox='0 0 15 15' width='15' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23037c88'%3E%3Cg transform='matrix(.70710678 -.70710678 .70710678 .70710678 -8.999984 3.727916)'%3E%3Cpath d='m0 12.7279h18v2h-18z'/%3E%3Cpath d='m0 12.7279h18v2h-18z'/%3E%3Cpath d='m0 12.7279h18v2h-18z'/%3E%3C/g%3E%3Cpath d='m1.48523.071045h18v2h-18z' transform='matrix(.70710678 .70710678 -.70710678 .70710678 .48525 -1.029408)'/%3E%3Cpath d='m1.48523.071045h18v2h-18z' transform='matrix(.70710678 .70710678 -.70710678 .70710678 .48525 -1.029408)'/%3E%3Cpath d='m1.48523.071045h18v2h-18z' transform='matrix(.70710678 .70710678 -.70710678 .70710678 .48525 -1.029408)'/%3E%3C/g%3E%3C/svg%3E") center center no-repeat;
+    background-size: 18px;
+}
+
 .olButton:focus {
     z-index: 1; // pull forward, so entire outline is visible
 }
 
 #site-header {
     background-color: $nav_background_colour;
-    padding: 10px 0;
+    padding: 15px 0;
 }
 
 #site-logo {
-    width: 272px;
+    width: 144px;
     // height: 61px; // see below
-    background-size: 272px auto;
+    background-size: cover;
     @include svg-background-image('images/peabody_logo');
 
     // text-indent doesn’t play nicely with focus outline,
     // so use padding overflow trick instead
     text-indent: 0;
     height: 0;
-    padding-top: 61px;
+    padding-top: 32px;
     overflow: hidden;
 }
 
@@ -67,6 +81,9 @@ a:focus,
 
 #report-cta {
     border-color: #fff;
+    border-radius: $border-radius;
+    border: 1.5px solid $peabody-brick-d1;
+    margin-right: 10px;
 }
 
 #front-main {
@@ -98,6 +115,11 @@ a:focus,
 
 a#geolocate_link {
     @include peabody-button-secondary();
+}
+
+h1, .h1, h2, .h2, h3, .h3 {
+    font-family: $heading-font;
+    font-weight: 700;
 }
 
 h1 {
@@ -132,7 +154,7 @@ input.form-error,
 textarea.form-error {
     background: #FBE3E4;
     border: 1px solid #FBC2C4;
-    border-radius: 4px;
+    border-radius: $border-radius;
 }
 
 div.form-error,
@@ -184,7 +206,7 @@ body.twothirdswidthpage .content .sticky-sidebar {
     min-width: 150px;
     outline: none;
     text-align: center;
-    border-radius: 6px;
+    border-radius: $border-radius;
     box-shadow: 2px 2px 5px #5F5F5F;
 
     top: 0.5em;
