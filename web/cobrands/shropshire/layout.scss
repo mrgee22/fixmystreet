@@ -9,22 +9,29 @@ body {
 }
 
 $header-height: 81px;
+$mappage-navbar-height: 64px;
 #site-header {
     padding: 10px 0;
     box-shadow: 0 -4px 4px 8px rgba(0, 0, 0,0.1);
+
+    body.mappage & {
+        // height: $mappage-header-height - 3px;
+        height: $mappage-navbar-height;
+        box-sizing: border-box;
+    }
 }
 
 #map_sidebar {
     top: $header-height;
     .mappage & {
-        top: 64px;
+        top: $mappage-navbar-height;
     }
 }
 
 #main-nav {
     min-height: $header-height;
     .mappage & {
-        min-height: 61px;
+        min-height: $mappage-navbar-height;
     }
 }
 
@@ -162,10 +169,6 @@ textarea.form-error {
 
 .peabody-footer {
     margin-top: 4em;
-}
-
-body.mappage #site-header {
-    height: $mappage-header-height - 3px;
 }
 
 body.twothirdswidthpage .content .sticky-sidebar {
