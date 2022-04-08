@@ -24,7 +24,7 @@ a:focus,
 .fake-link:focus,
 #nav-link.focussed,
 .olButton:focus {
-    outline: solid 3px $peabody-orange;
+    outline: solid 2px $peabody-blue;
 }
 
 #nav-link {
@@ -83,10 +83,14 @@ html.js-nav-open #nav-link {
 }
 
 #report-cta {
-    border-color: #fff;
+    border-color: $peabody-white;
     border-radius: $border-radius;
     border: 1.5px solid $peabody-brick-d1;
     margin-right: 10px;
+
+    &:focus, &:hover {
+        color: $peabody-white;
+    }
 }
 
 #front-main {
@@ -222,6 +226,20 @@ body.twothirdswidthpage .content .sticky-sidebar {
     color: $peabody-mid-grey;
 }
 
+.item-list__item {
+    html.mobile & {
+        background-color: mix($peabody-teal, $peabody-white, 25%);
+    }
+}
+
+.pagination {
+    html.mobile & {
+        background: transparent;
+        font-weight: 600;
+        opacity: 0.8;
+    }
+}
+
 .box-warning {
     $border-width: 1px;
     background-color: mix($peabody-orange, #fff, 15%);
@@ -285,6 +303,31 @@ html.js .form-section-preview {
         border-radius: $border-radius;
         border: 1px solid $peabody-brick-d1;
     
+    }
+}
+
+.sub-map-links {
+    a:hover, a:focus {
+        color: $peabody-teal-l2;
+    }
+}
+
+.shadow-wrap {
+    html.mobile & {
+        margin-top: 10px;
+
+        #key-tools {
+            li {border-right-color: transparent;}
+
+            a, button {
+                background-color: transparent;
+                border: 1px solid $primary;
+
+                &:focus {
+                    background-color: $peabody-teal; 
+                }
+            }
+        }
     }
 }
 
