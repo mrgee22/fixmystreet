@@ -255,20 +255,16 @@ sub munge_sendreport_params {
 sub open311_extra_data_include {
     my ($self, $row, $h, $contact) = @_;
 
-    my $title = $row->title;
-
     my $open311_only = [
         { name => 'report_url',
           value => $h->{url} },
-        { name => 'title',
-          value => $title },
         { name => 'description',
           value => $row->detail },
         { name => 'category',
           value => $row->category },
     ];
 
-
+    my $title = $row->title;
     # Certain categories for the Alloy Environmental Services integration
     # have manually-created extra fields that should be appended to the
     # report title when submitted via Open311.
@@ -287,7 +283,7 @@ sub open311_extra_data_include {
             { name => 'requested_datetime',
               value => DateTime::Format::W3CDTF->format_datetime($row->confirmed->set_nanosecond(0)) };
     }
-
+    push @$open311_only, { name => 'title', value => $title };
 
     return $open311_only;
 }
