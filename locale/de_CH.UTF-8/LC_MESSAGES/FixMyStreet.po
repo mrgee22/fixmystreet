@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: matthew@mysociety.org\n"
-"POT-Creation-Date: 2022-04-14 11:55+0100\n"
-"PO-Revision-Date: 2021-09-14 16:44+0200\n"
+"POT-Creation-Date: 2022-04-01 14:12+0100\n"
+"PO-Revision-Date: 2022-04-13 11:58+0200\n"
 "Last-Translator: mySociety <transifex@mysociety.org>, 2019\n"
 "Language-Team: German (Switzerland) (https://www.transifex.com/mysociety/teams/12067/de_CH/)\n"
 "Language: de_CH\n"
@@ -194,7 +194,7 @@ msgstr ""
 msgid "(unassigned)"
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:823
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:821
 #: templates/web/zurich/admin/bodies/form.html:27
 msgid "-- Pick a category --"
 msgstr "-- Wählen Sie eine Kategorie --"
@@ -228,8 +228,7 @@ msgstr ""
 #. ("The first %s is a dropdown of all/fixed/etc, the second is a dropdown of categories")
 #: templates/web/base/admin/triage/_list-filters.html:24
 #: templates/web/base/reports/_list-filters.html:37
-#, fuzzy
-msgid "<label id=\"select-label-statuses\" for=\"statuses\">Show</label> %s reports <label id=\"select-label-categories\" for=\"filter_categories\">about</label> %s"
+msgid "<label for=\"statuses\">Show</label> %s reports <label for=\"filter_categories\">about</label> %s"
 msgstr "<label for=\"statuses\">Zeige</label> %s Meldungen <label for=\"filter_categories\">über</label> %s"
 
 #. ("JS")
@@ -558,9 +557,8 @@ msgid "Assign problem reports to users"
 msgstr "User an Gegenden zuweisen"
 
 #: templates/web/base/admin/users/index.html:73
-#, fuzzy
 msgid "Assign selected to role:"
-msgstr "User an Gegenden zuweisen"
+msgstr "User an Kategorie zuweisen:"
 
 #: templates/web/base/reports/_bulk-assign.html:3
 #, fuzzy
@@ -1147,7 +1145,7 @@ msgstr "Beschreibung"
 msgid "Destination"
 msgstr "Beschreibung"
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:466
+#: perllib/FixMyStreet/App/Controller/Report.pm:465
 msgid "Detailed information is limited to %d characters."
 msgstr ""
 
@@ -2117,7 +2115,7 @@ msgid "Invalid format %s specified."
 msgstr ""
 
 #: perllib/FixMyStreet/App/Controller/Moderate.pm:337
-#: perllib/FixMyStreet/App/Controller/Report.pm:543
+#: perllib/FixMyStreet/App/Controller/Report.pm:542
 msgid "Invalid location. New location must be covered by the same council."
 msgstr ""
 
@@ -2356,9 +2354,9 @@ msgstr "Monat"
 msgid "Most commented"
 msgstr "Am meisten kommentiert"
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:737
-#: perllib/FixMyStreet/App/Controller/Report.pm:776
-#: perllib/FixMyStreet/App/Controller/Report.pm:780
+#: perllib/FixMyStreet/App/Controller/Report.pm:736
+#: perllib/FixMyStreet/App/Controller/Report.pm:775
+#: perllib/FixMyStreet/App/Controller/Report.pm:779
 #: templates/web/base/admin/category-checkboxes.html:31
 msgid "Multiple Groups"
 msgstr ""
@@ -2583,9 +2581,9 @@ msgstr ""
 msgid "No"
 msgstr "Nein"
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:771
-#: perllib/FixMyStreet/App/Controller/Report.pm:776
-#: perllib/FixMyStreet/App/Controller/Report.pm:781
+#: perllib/FixMyStreet/App/Controller/Report.pm:770
+#: perllib/FixMyStreet/App/Controller/Report.pm:775
+#: perllib/FixMyStreet/App/Controller/Report.pm:780
 msgid "No Group"
 msgstr ""
 
@@ -2596,7 +2594,7 @@ msgstr ""
 #: templates/web/base/admin/users/form.html:49
 #: templates/web/zurich/admin/users/form.html:15
 msgid "No body"
-msgstr ""
+msgstr "Keine DA/kein Fachbereich"
 
 #: perllib/FixMyStreet/DB/Result/Problem.pm:415
 msgid "No council selected"
@@ -2809,13 +2807,13 @@ msgid "Order"
 msgstr ""
 
 #: perllib/FixMyStreet/App/Controller/Admin/Triage.pm:97
+#: perllib/FixMyStreet/App/Controller/Report.pm:757
 #: perllib/FixMyStreet/App/Controller/Report.pm:758
-#: perllib/FixMyStreet/App/Controller/Report.pm:759
-#: perllib/FixMyStreet/App/Controller/Report.pm:776
-#: perllib/FixMyStreet/App/Controller/Report.pm:779
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1559
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:828
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:829
+#: perllib/FixMyStreet/App/Controller/Report.pm:775
+#: perllib/FixMyStreet/App/Controller/Report.pm:778
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1557
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:826
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:827
 #: perllib/FixMyStreet/DB/Result/Problem.pm:664
 #: perllib/FixMyStreet/DB/Result/Problem.pm:671
 #: perllib/FixMyStreet/DB/Result/Problem.pm:686
@@ -3006,13 +3004,13 @@ msgstr ""
 
 #. ("JS")
 #: perllib/FixMyStreet/App/Controller/Admin/Bodies.pm:231
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1121
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1164
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1119
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1162
 #: templates/web/base/js/translation_strings.html:21
 msgid "Please choose a category"
 msgstr "Bitte wählen Sie eine Kategorie"
 
-#: perllib/FixMyStreet/App/Controller/Auth.pm:520
+#: perllib/FixMyStreet/App/Controller/Auth.pm:519
 msgid "Please choose a less commonly-used password"
 msgstr ""
 
@@ -3185,7 +3183,7 @@ msgid "Please make sure you are not including an email address"
 msgstr "Bitte geben Sie eine gültige E-Mail Adresse an"
 
 #. ("JS")
-#: perllib/FixMyStreet/App/Controller/Auth.pm:518
+#: perllib/FixMyStreet/App/Controller/Auth.pm:517
 #: templates/web/base/js/translation_strings.html:34
 msgid "Please make sure your password is at least %d characters long"
 msgstr ""
@@ -3211,15 +3209,15 @@ msgstr ""
 msgid "Please note:"
 msgstr "Hinweise:"
 
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:963
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:961
 msgid "Please pick your update preference"
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:495
+#: perllib/FixMyStreet/App/Controller/Report.pm:494
 msgid "Please provide a duplicate ID or public update for this report."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:477
+#: perllib/FixMyStreet/App/Controller/Report.pm:476
 msgid "Please provide a public update for this report."
 msgstr ""
 
@@ -3672,7 +3670,7 @@ msgstr ""
 
 #: templates/web/base/admin/users/index.html:85
 msgid "Remove staff permissions"
-msgstr ""
+msgstr "Keiner DA mehr zuweisen"
 
 #: templates/web/base/auth/generate_token.html:75
 msgid "Replace token"
@@ -3939,9 +3937,8 @@ msgstr "Richtiger Ort?"
 #. ("JS")
 #: templates/web/base/js/translation_strings.html:66
 #: templates/web/base/maps/openlayers.html:62
-#, fuzzy
 msgid "Road map"
-msgstr "Karte verwendet"
+msgstr "Karte"
 
 #: perllib/FixMyStreet/Geocode/OSM.pm:162
 msgid "Road operator for this named road (derived from road reference number and type): %s"
@@ -3953,18 +3950,18 @@ msgstr ""
 
 #: templates/web/base/admin/roles/index.html:5
 msgid "Role"
-msgstr ""
+msgstr "Rolle"
 
 #: templates/web/base/admin/users/form.html:142
 #: templates/web/base/admin/users/index.html:29
 msgid "Role:"
-msgstr ""
+msgstr "Rolle:"
 
 #: perllib/FixMyStreet/Cobrand/Default.pm:738
 #: templates/web/base/admin/roles/form.html:1
 #: templates/web/base/admin/roles/index.html:1
 msgid "Roles"
-msgstr ""
+msgstr "Rollen"
 
 #: perllib/FixMyStreet/App/Controller/Admin.pm:411
 #: perllib/FixMyStreet/App/Controller/Admin.pm:415
@@ -4072,11 +4069,6 @@ msgstr ""
 msgid "Select a body"
 msgstr "Organisation wählen"
 
-#. ("JS")
-#: templates/web/base/js/translation_strings.html:116
-msgid "Select a category to display"
-msgstr ""
-
 #: templates/web/base/admin/bodies/form.html:78
 #: templates/web/base/admin/users/form.html:89
 #: templates/web/zurich/admin/bodies/form.html:37
@@ -4094,12 +4086,6 @@ msgstr ""
 #: templates/web/base/reports/_ward-list.html:8
 msgid "Select multiple wards?"
 msgstr ""
-
-#. ("JS")
-#: templates/web/base/js/translation_strings.html:115
-#, fuzzy
-msgid "Select report status"
-msgstr "Meldung zurückgewiesen"
 
 #: templates/web/base/admin/category-checkboxes.html:4
 msgid "Select:"
@@ -4340,7 +4326,7 @@ msgstr ""
 msgid "Sorry, you don't have permission to do that."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:196
+#: perllib/FixMyStreet/App/Controller/Report.pm:195
 msgid "Sorry, you don’t have permission to do that. If you are the problem reporter, or a member of staff, please <a href=\"%s\">sign in</a> to view this report."
 msgstr ""
 
@@ -4674,7 +4660,7 @@ msgstr "Sie können Schäden nur innerhalb der Stadt Zürich melden. Verwenden S
 msgid "That location does not appear to be in the UK; please try again."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Auth.pm:522
+#: perllib/FixMyStreet/App/Controller/Auth.pm:521
 msgid "That password has appeared in a known third-party data breach (<a href=\"https://haveibeenpwned.com/Passwords\" target=\"_blank\">more information</a>); please choose another"
 msgstr ""
 
@@ -4692,7 +4678,7 @@ msgstr "Die Meldung wurde als gesendet markiert."
 msgid "That problem will now be resent."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report.pm:177
+#: perllib/FixMyStreet/App/Controller/Report.pm:176
 msgid "That report has been removed from FixMyStreet."
 msgstr "Diese Meldung wurde von «Züri wie neu» entfernt."
 
@@ -4908,7 +4894,7 @@ msgstr ""
 msgid "There was a problem with your login information."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:995
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:993
 #: perllib/FixMyStreet/App/Controller/Report/Update.pm:165
 msgid "There was a problem with your login information. If you cannot remember your password, or do not have one, please fill in the ‘No’ section of the form."
 msgstr ""
@@ -5001,9 +4987,9 @@ msgstr ""
 msgid "This emergency message will be shown on the homepage."
 msgstr ""
 
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1178
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1260
-#: perllib/FixMyStreet/App/Controller/Report/New.pm:1307
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1176
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1258
+#: perllib/FixMyStreet/App/Controller/Report/New.pm:1305
 #: perllib/FixMyStreet/Cobrand/UK.pm:61
 msgid "This information is required"
 msgstr "Diese Information wird benötigt"
@@ -5246,9 +5232,9 @@ msgstr "Unbekannter Fehler"
 #: perllib/FixMyStreet/App/Controller/Develop.pm:194
 #: perllib/FixMyStreet/App/Controller/Develop.pm:213
 #: perllib/FixMyStreet/App/Controller/My.pm:242
-#: perllib/FixMyStreet/App/Controller/Report.pm:162
-#: perllib/FixMyStreet/App/Controller/Report.pm:168
-#: perllib/FixMyStreet/App/Controller/Report.pm:171
+#: perllib/FixMyStreet/App/Controller/Report.pm:161
+#: perllib/FixMyStreet/App/Controller/Report.pm:167
+#: perllib/FixMyStreet/App/Controller/Report.pm:170
 msgid "Unknown problem ID"
 msgstr ""
 
@@ -5698,7 +5684,7 @@ msgstr ""
 
 #: templates/web/base/maps/_map_instructions.html:3
 msgid "You can move around with your keyboard"
-msgstr ""
+msgstr "Kartensteuerung über Tastatur"
 
 #: perllib/FixMyStreet/App/Controller/Admin/Bodies.pm:241
 msgid "You cannot rename a category to an existing category"
