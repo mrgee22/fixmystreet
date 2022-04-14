@@ -1,5 +1,6 @@
 @import "../sass/h5bp";
 @import "./_colours";
+@import "./_fonts";
 @import "./_mixins";
 @import "../sass/mixins";
 
@@ -128,7 +129,7 @@ a#geolocate_link {
 
 h1, .h1, h2, .h2 {
     font-family: $heading-font;
-    font-weight: 700;
+    font-weight: normal;
 }
 
 h1 {
