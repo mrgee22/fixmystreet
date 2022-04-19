@@ -19,6 +19,9 @@ a,
     &:active {
         color: $peabody-brick-d2;
     }
+    &:focus {
+        text-decoration: underline;
+    }
 }
 
 a:focus,
@@ -329,6 +332,15 @@ html.js .form-section-preview {
                 }
             }
         }
+    }
+}
+
+div.form-error a, p.form-error a {
+    color: $peabody-brick-d1 !important;
+
+    &:hover, &:focus {
+        color: $peabody-brick-d2 !important;
+        text-decoration: none;
     }
 }
 
