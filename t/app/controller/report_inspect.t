@@ -998,7 +998,7 @@ FixMyStreet::override_config {
         $user->update;
         my $role = $user->roles->create({
             body => $oxon,
-            name => 'Role A',
+            name => 'Role B',
             permissions => ['moderate', 'planned_reports'],
         });
         $role->set_extra_metadata('categories', [$contact2->id]);
