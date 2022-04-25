@@ -48,4 +48,8 @@ sub reopening_disallowed {
 
 sub default_map_zoom { 6 }
 
+sub privacy_policy_url {
+    'https://www.thamesmeadnow.org.uk/terms-and-conditions/privacy-statement/'
+}
+
 1;
