@@ -341,7 +341,7 @@ fixmystreet.assets.add(defaults, {
             if (is_tlrn_category_only(category, fixmystreet.bodies)) {
                 fixmystreet.message_controller.road_not_found(layer);
                 var body = new RegExp('&body=.*');
-                ($('#a13bdfolink').attr('href', $('#a13bdfolink').attr('href').replace(body, '&body=' +  encodeURIComponent(window.location.href))));
+                ($('#a13dbfolink').attr('href', $('#a13dbfolink').attr('href').replace(body, '&body=' +  encodeURIComponent(window.location.href))));
             } else {
                 fixmystreet.message_controller.road_found(layer);
             }
