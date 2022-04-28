@@ -57,6 +57,7 @@ sub admin_allow_user {
     return $user->from_body->name eq 'Thamesmead';
 }
 
+sub cut_off_date { '2022-04-25' }
 sub problems_restriction { FixMyStreet::Cobrand::UKCouncils::problems_restriction($_[0], $_[1]) }
 sub problems_on_map_restriction { $_[0]->problems_restriction($_[1]) }
 sub problems_sql_restriction { FixMyStreet::Cobrand::UKCouncils::problems_sql_restriction($_[0], $_[1]) }
