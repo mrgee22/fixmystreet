@@ -8,9 +8,7 @@ sub council_area { return 'Thamesmead'; }
 sub council_name { return 'Thamesmead'; }
 sub council_url { return 'thamesmead'; }
 
-sub admin_user_domain {
-    'thamesmeadnow.org.uk'
-}
+sub admin_user_domain { ( 'thamesmeadnow.org.uk', 'peabody.org.uk' ) }
 
 sub updates_disallowed {
     my $self = shift;
@@ -56,14 +54,14 @@ sub admin_allow_user {
     my ( $self, $user ) = @_;
     return 1 if $user->is_superuser;
     return undef unless defined $user->from_body;
-    # Make sure TfL staff can't access other London cobrand admins
-    return undef if $user->from_body->name eq 'TfL';
     return $user->from_body->name eq 'Thamesmead';
 }
 
-sub admin_user_domain { ( 'peabody.org.uk' ) }
-
+sub problems_restriction { FixMyStreet::Cobrand::UKCouncils::problems_restriction($_[0], $_[1]) }
+sub problems_on_map_restriction { $_[0]->problems_restriction($_[1]) }
+sub problems_sql_restriction { FixMyStreet::Cobrand::UKCouncils::problems_sql_restriction($_[0], $_[1]) }
 sub users_restriction { FixMyStreet::Cobrand::UKCouncils::users_restriction($_[0], $_[1]) }
+sub updates_restriction { FixMyStreet::Cobrand::UKCouncils::updates_restriction($_[0], $_[1]) }
 
 sub default_map_zoom { 6 }
 
