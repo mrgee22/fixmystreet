@@ -29,35 +29,19 @@ var options = $.extend(true, {}, base_options, {
     }
 });
 
-// This is required so that the found/not found actions are fired on category
-// select and pin move rather than just on asset select/not select.
-OpenLayers.Layer.BristolVectorAsset = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
-    initialize: function(name, options) {
-	OpenLayers.Layer.VectorAsset.prototype.initialize.apply(this, arguments);
-	$(fixmystreet).on('maps:update_pin', this.checkSelected.bind(this));
-	$(fixmystreet).on('report_new:category_change', this.checkSelected.bind(this));
-    },
-
-    CLASS_NAME: 'OpenLayers.Layer.BristolVectorAsset'
-});
-
 var parkOptions = $.extend(true, {}, base_options, {
     wfs_url: 'https://tilma.staging.mysociety.org/mapserver/bristol',
     wfs_feature: "parks",
     asset_type: 'area',
     asset_id_field: 'SITE_CODE',
     srsName: "EPSG:3857",
-    class: OpenLayers.Layer.BristolVectorAsset,
     strategy_class: OpenLayers.Strategy.FixMyStreet,
-    select_action: true,
-    snap_threshold: 10,
+    road: true,
+    non_interactive: true,
     stylemap: fixmystreet.assets.stylemap_invisible,
-    disable_pin_snapping: true,
     actions: {
-        //asset_found: fixmystreet.message_controller.asset_found,
-        //asset_not_found: fixmystreet.message_controller.asset_not_found,
-        asset_found: function() { console.log("Found"); },
-        asset_not_found: function() { console.log("Not found"); }
+        found: fixmystreet.message_controller.road_found,
+        not_found: fixmystreet.message_controller.road_not_found
     }
 });
 
