@@ -50,9 +50,14 @@ var parkOptions = $.extend(true, {}, base_options, {
     class: OpenLayers.Layer.BristolVectorAsset,
     strategy_class: OpenLayers.Strategy.FixMyStreet,
     select_action: true,
+    snap_threshold: 10,
+    stylemap: fixmystreet.assets.stylemap_invisible,
+    disable_pin_snapping: true,
     actions: {
-	asset_found: fixmystreet.message_controller.asset_found,
-	asset_not_found: fixmystreet.message_controller.asset_not_found
+        //asset_found: fixmystreet.message_controller.asset_found,
+        //asset_not_found: fixmystreet.message_controller.asset_not_found,
+        asset_found: function() { console.log("Found"); },
+        asset_not_found: function() { console.log("Not found"); }
     }
 });
 

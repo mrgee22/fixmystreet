@@ -169,9 +169,9 @@ OpenLayers.Layer.VectorBase = OpenLayers.Class(OpenLayers.Layer.Vector, {
     },
 
     checkSelected: function(evt, lonlat) {
-        if (!this.getVisibility()) {
-          return;
-        }
+        //if (!this.getVisibility()) {
+        //  return;
+        //}
         if (this.fixmystreet.select_action) {
             if (fixmystreet.assets.selectedFeature()) {
                 this.asset_found();
@@ -779,8 +779,8 @@ function construct_select_layer_events(asset_layer, options) {
         // details form fields first though.
         asset_layer.events.register( 'beforefeatureselected', asset_layer, function(e) {
             var that = this;
+            if (e) {console.log("Selected"); this.asset_found.call(this); }
             this.setAttributeFields(e.feature);
-
             // The next click on the map may not be on an asset - so
             // clear the fields for this layer when the pin is next
             // updated. If it is on an asset then the fields will be
@@ -798,7 +798,6 @@ function construct_select_feature_control(asset_layers, options) {
     if (options.non_interactive) {
         return;
     }
-
     $.each(asset_layers, function(i, layer) {
         construct_select_layer_events(layer, options);
     });
@@ -849,6 +848,7 @@ fixmystreet.assets = {
     }),
 
     style_default: new OpenLayers.Style({
+        fill:true,
         fillColor: "#FFFF00",
         fillOpacity: 0.6,
         strokeColor: "#000000",
@@ -1337,6 +1337,7 @@ fixmystreet.message_controller = (function() {
     return {
         asset_found: function() {
             responsibility_off(this, 'asset');
+            console.log("asset found");
             return ($('#' + stopperId).length);
         },
 
