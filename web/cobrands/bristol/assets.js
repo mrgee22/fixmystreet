@@ -13,6 +13,12 @@ var base_options = {
     geometryName: 'SHAPE'
 };
 
+var park_style = new OpenLayers.Style({
+    fill: true,
+    fillColor: "#1be547",
+    fillOpacity: "0.25"
+});
+
 // Assets are served from two different WFS feeds; one for lighting and one
 // for everything else. They have some options in common:
 var options = $.extend(true, {}, base_options, {
@@ -29,30 +35,19 @@ var options = $.extend(true, {}, base_options, {
     }
 });
 
-// This is required so that the found/not found actions are fired on category
-// select and pin move rather than just on asset select/not select.
-OpenLayers.Layer.BristolVectorAsset = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
-    initialize: function(name, options) {
-	OpenLayers.Layer.VectorAsset.prototype.initialize.apply(this, arguments);
-	$(fixmystreet).on('maps:update_pin', this.checkSelected.bind(this));
-	$(fixmystreet).on('report_new:category_change', this.checkSelected.bind(this));
-    },
-
-    CLASS_NAME: 'OpenLayers.Layer.BristolVectorAsset'
-});
-
 var parkOptions = $.extend(true, {}, base_options, {
     wfs_url: 'https://tilma.staging.mysociety.org/mapserver/bristol',
     wfs_feature: "parks",
     asset_type: 'area',
     asset_id_field: 'SITE_CODE',
     srsName: "EPSG:3857",
-    class: OpenLayers.Layer.BristolVectorAsset,
+    stylemap: park_style,
     strategy_class: OpenLayers.Strategy.FixMyStreet,
-    select_action: true,
+    road: true,
+    non_interactive: true,
     actions: {
-	asset_found: fixmystreet.message_controller.asset_found,
-	asset_not_found: fixmystreet.message_controller.asset_not_found
+        found: fixmystreet.message_controller.road_found,
+        not_found: fixmystreet.message_controller.road_not_found
     }
 });
 
