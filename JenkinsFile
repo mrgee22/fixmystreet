@@ -15,7 +15,7 @@ pipeline{
 
         stage ("deploy") {
             steps {
-                echo 'Hello deploy stage.....'
+                echo 'Hello deploy stage......'
             }
         }
     }
