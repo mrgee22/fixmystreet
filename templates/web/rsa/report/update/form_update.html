@@ -5,7 +5,7 @@
 
 [% TRY %][% PROCESS 'report/update/before_update.html' %][% CATCH file %][% END %]
 
-<label for="external_id">[% loc('Reference No') %]:</label>
+<label for="external_id">[% loc('Kindly enter the reference number received from') %]:</label>
 [% IF relevant_staff_user %]
   [% INCLUDE 'admin/response_templates_select.html' for='external_id' %]
 [% END %]

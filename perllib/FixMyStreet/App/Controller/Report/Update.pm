@@ -75,7 +75,7 @@ sub update_problem : Private {
     }
 
     #rsa adding external id / Reference number after the problem has been reported. 
-    $problem->external_id($c-> get_param('external_id'));
+    $problem->external_id($c-> get_param('external_id')); 
 
     $problem->lastupdate( \'current_timestamp' );
     $problem->update;
