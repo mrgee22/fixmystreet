@@ -248,8 +248,8 @@ FixMyStreet::override_config {
         $mech->get_ok('/waste/PE1 3NA:100090215480');
         $mech->content_lacks('Request a new bin');
         $mech->get_ok('/waste/PE1 3NA:100090215480/request');
-        $mech->content_lacks('240L Green');
-        $mech->content_lacks('240L Black');
+        $mech->content_like(qr/name="container-420"[^>]*disabled/s); # green
+        $mech->content_like(qr/name="container-419"[^>]*disabled/s); # black
         $mech->content_lacks('Large food caddy');
         $mech->content_lacks('Small food caddy');
         $mech->content_lacks('All bins');
@@ -722,6 +722,13 @@ FixMyStreet::override_config {
                 item4 => 'table',
                 item5 => 'fridge',
             }});
+        };
+
+        subtest 'Location details page' => sub {
+            $mech->content_contains('Location details');
+            $mech->content_contains('Please tell us about anything else you feel is relevant');
+            $mech->content_contains('Help us by attaching a photo of where the items will be left for collection');
+            $mech->submit_form_ok({ with_fields => { location => 'behind the hedge in the front garden' } });
         };
 
         subtest 'Summary page' => sub {
