@@ -6,21 +6,12 @@ if (!fixmystreet.maps) {
 
 var domain = fixmystreet.staging ? "https://tilma.staging.mysociety.org" : "https://tilma.mysociety.org";
 var defaults = {
-    http_options: {
-        url: domain + "/mapserver/centralbeds",
-        params: {
-            SERVICE: "WFS",
-            VERSION: "1.1.0",
-            REQUEST: "GetFeature",
-            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
-        }
-    },
+    http_wfs_url: domain + "/mapserver/centralbeds",
     asset_type: 'spot',
     max_resolution: 9.554628534317017,
     geometryName: 'msGeometry',
     srsName: "EPSG:3857",
-    body: "Central Bedfordshire Council",
-    strategy_class: OpenLayers.Strategy.FixMyStreet
+    body: "Central Bedfordshire Council"
 };
 var proxy_defaults = $.extend(true, {}, defaults, {
     http_options: {
@@ -71,11 +62,7 @@ function hide_non_stopper_message() {
 }
 
 fixmystreet.assets.add(defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "Highways"
-        }
-    },
+    wfs_feature: "Highways",
     stylemap: fixmystreet.assets.stylemap_invisible,
     non_interactive: true,
     always_visible: true,
@@ -136,22 +123,14 @@ var labeled_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "StreetLighting"
-        }
-    },
+    wfs_feature: "StreetLighting",
     max_resolution: 2.388657133579254,
     asset_category: ["Street Lights"],
     asset_item: 'street light'
 });
 
 fixmystreet.assets.add(defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "Gullies"
-        }
-    },
+    wfs_feature: "Gullies",
     max_resolution: 1.194328566789627,
     asset_category: ["Surface cover", "Drains/Ditches Blocked"],
     asset_item: 'drain or manhole'

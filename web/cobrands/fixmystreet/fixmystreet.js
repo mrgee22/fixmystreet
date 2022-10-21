@@ -78,7 +78,6 @@ function isR2L() {
                         $ajax_result.html('<p style="text-align:center">Loading</p>');
                         $ajax_result.load(href);
                     }
-
                     // Style up the $drawer
                     drawer_top = $(window).height() - $sw.height();
                     var drawer_css = {
@@ -99,6 +98,8 @@ function isR2L() {
 
                 // Insert the .shadow-wrap controls into the top of the drawer.
                 $sw.addClass('static').prependTo($drawer);
+                $('#key-tools').addClass('area-js');
+                $('#key-tool-wards').addClass('hover');
 
                 // Animate the drawer into place, enitrely covering the sidebar.
                 var sidebar_top_px = $sidebar.position().top;
@@ -1491,10 +1492,13 @@ function re_select(group, category) {
 
 // On the new report form, does this by asking for details from the server.
 fixmystreet.fetch_reporting_data = function() {
+    var he_arg = window.location.href.indexOf('&he_referral=1');
+    he_arg = he_arg === -1 ? 0 : 1;
     $.getJSON('/report/new/ajax', {
         w: 1,
         latitude: $('#fixmystreet\\.latitude').val(),
-        longitude: $('#fixmystreet\\.longitude').val()
+        longitude: $('#fixmystreet\\.longitude').val(),
+        he_referral: he_arg
     }, function(data) {
         if (data.error) {
             if (!$('#side-form-error').length) {

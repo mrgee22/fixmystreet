@@ -12,6 +12,9 @@ END { FixMyStreet::App->log->enable('info'); }
 my $uk = Test::MockModule->new('FixMyStreet::Cobrand::UK');
 $uk->mock('_fetch_url', sub { '{}' });
 
+my $mock = Test::MockModule->new('FixMyStreet::Cobrand::Peterborough');
+$mock->mock('_fetch_features', sub { [] });
+
 my $mech = FixMyStreet::TestMech->new;
 
 my $params = {
@@ -52,6 +55,18 @@ create_contact({ category => '240L Black - Wheels', email => 'Bartec-541' }, 'Bi
 create_contact({ category => '240L Green - Wheels', email => 'Bartec-540' }, 'Bin repairs');
 create_contact({ category => 'Not returned to collection point', email => 'Bartec-497' }, 'Not returned to collection point');
 create_contact({ category => 'Black 360L bin', email => 'Bartec-422' }, 'Request new container');
+create_contact(
+    { category => 'Bulky collection', email => 'Bartec-238' },
+    'Bulky goods',
+    { code => 'ITEM_01', required => 1 },
+    { code => 'ITEM_02' },
+    { code => 'ITEM_03' },
+    { code => 'ITEM_04' },
+    { code => 'ITEM_05' },
+    { code => 'CHARGEABLE' },
+    { code => 'CREW NOTES' },
+    { code => 'DATE' },
+);
 
 FixMyStreet::override_config {
     ALLOWED_COBRANDS => 'peterborough',
@@ -71,7 +86,7 @@ FixMyStreet::override_config {
         $mech->get_ok('/waste');
         $mech->submit_form_ok({ with_fields => { postcode => 'PE1 3NA' } });
         $mech->submit_form_ok({ with_fields => { address => 'missing' } });
-        $mech->content_contains('can’t find your address', "Missing message found");
+        $mech->content_contains('find your address in our records', "Missing message found");
     };
     subtest 'Address lookup' => sub {
         set_fixed_time('2021-08-05T21:00:00Z');
@@ -654,6 +669,7 @@ FixMyStreet::override_config {
 };
 
 FixMyStreet::override_config {
+    MAPIT_URL => 'http://mapit.uk/',
     ALLOWED_COBRANDS => 'peterborough',
     COBRAND_FEATURES => {
         bartec => { peterborough => {
@@ -700,11 +716,16 @@ FixMyStreet::override_config {
         subtest 'Choose date page' => sub {
             $mech->content_contains('Choose date for collection');
             $mech->content_contains('Available dates');
-            $mech->content_contains('2022-08-25');
-            $mech->content_contains('2022-08-26');
-            $mech->content_contains('2022-08-27');
-            $mech->content_contains('2022-08-28');
-            $mech->submit_form_ok({ with_fields => { chosen_date => '20220828' }});
+            $mech->content_contains('05 August');
+            $mech->content_contains('12 August');
+            $mech->content_contains('19 August');
+            $mech->content_contains('26 August');
+            $mech->content_lacks('02 September'); # Max of 4 dates fetched
+            $mech->submit_form_ok(
+                {   with_fields =>
+                        { chosen_date => '2022-08-26T00:00:00' }
+                }
+            );
         };
 
         subtest 'Add items page' => sub {
@@ -733,15 +754,34 @@ FixMyStreet::override_config {
 
         subtest 'Summary page' => sub {
             $mech->content_contains('Submit bulky goods collection booking');
-            $mech->content_contains('Please review the information you’ve provided before you submit your bulky goods collection booking.');
+            $mech->content_contains('Please review the information');
+            $mech->content_contains('provided before you submit your bulky goods collection booking.');
             $mech->content_contains('<dd class="govuk-summary-list__value">table</dd>');
             $mech->submit_form_ok({ with_fields => { tandc => 1 } });
         };
 
-        # XXX payment tests here!
+        subtest 'Payment page' => sub {
+            $mech->content_contains('Payment successful');
+            $mech->submit_form_ok;
+        };
 
         subtest 'Confirmation page' => sub {
             $mech->content_contains('Collection booked');
+
+            my $report = FixMyStreet::DB->resultset("Problem")->search(undef, { order_by => { -desc => 'id' } })->first;
+            is $report->get_extra_field_value('uprn'), 100090215480;
+            is $report->detail, "Address: 1 Pope Way, Peterborough, PE1 3NA";
+            is $report->category, 'Bulky collection';
+            is $report->title, 'Bulky goods collection';
+            is $report->get_extra_field_value('uprn'), 100090215480;
+            is $report->get_extra_field_value('DATE'), '2022-08-26T00:00:00';
+            is $report->get_extra_field_value('CREW NOTES'), 'behind the hedge in the front garden';
+            is $report->get_extra_field_value('CHARGEABLE'), 'CHARGED';
+            is $report->get_extra_field_value('ITEM_01'), 'fridge';
+            is $report->get_extra_field_value('ITEM_02'), 'chair';
+            is $report->get_extra_field_value('ITEM_03'), 'sofa';
+            is $report->get_extra_field_value('ITEM_04'), 'table';
+            is $report->get_extra_field_value('ITEM_05'), 'fridge';
         };
 
     };
@@ -759,7 +799,8 @@ FixMyStreet::override_config {
         },
         waste_features => {
             peterborough => {
-                admin_config_enabled => 1
+                admin_config_enabled => 1,
+                bulky_enabled => 1
             }
         }
     },
@@ -828,14 +869,180 @@ FixMyStreet::override_config {
             $body->discard_changes;
             is_deeply $body->get_extra_metadata('wasteworks_config'), { base_price => 2350, daily_slots => 40 };
         };
-
     };
 
+    subtest 'WasteWorks bulky goods item list administration' => sub {
+        ok $mech->host('peterborough.fixmystreet.com');
+        my ($b, $jobs_fsd_get) = shared_bartec_mocks();
+
+        subtest 'List admin page is linked from config page' => sub {
+            $mech->log_in_ok($super->email);
+            $mech->get_ok('/admin/waste/' . $body->id);
+            $mech->follow_link_ok( { text_regex => qr/Bulky items list/i, }, "follow 'Bulky items list' link" );
+            is $mech->uri->path, '/admin/waste/' . $body->id . '/bulky_items', 'ended up on correct page';
+        };
+
+        subtest 'Items can be stored correctly' => sub {
+            $body->set_extra_metadata(wasteworks_config => {});
+            $body->update;
+
+            # check validation of required fields
+            $mech->get_ok('/admin/waste/' . $body->id . '/bulky_items');
+            $mech->submit_form_ok({ with_fields => {
+                'bartec_id[9999]' => 1234,
+                'category[9999]' => 'Furniture',
+                'name[9999]' => '', # name is required
+                'price[9999]' => '0',
+                'message[9999]' => '',
+            }});
+            $mech->content_lacks("Updated!");
+            $mech->content_contains("Please correct the errors below");
+
+            $body->discard_changes;
+            is_deeply $body->get_extra_metadata('wasteworks_config'), {};
+
+            # correctly store an item
+            $mech->get_ok('/admin/waste/' . $body->id . '/bulky_items');
+            $mech->submit_form_ok({ with_fields => {
+                'bartec_id[9999]' => 1234,
+                'category[9999]' => 'Furniture',
+                'name[9999]' => 'Sofa',
+                'price[9999]' => '0',
+                'message[9999]' => 'test',
+            }});
+            $mech->content_contains("Updated!");
+
+            $body->discard_changes;
+            is_deeply $body->get_extra_metadata('wasteworks_config'), {
+                item_list => [ {
+                    bartec_id => "1234",
+                    category => "Furniture",
+                    message => "test",
+                    name => "Sofa",
+                    price => "0"
+                }]
+            };
+
+            # and add a new one
+            $mech->submit_form_ok({ with_fields => {
+                'bartec_id[9999]' => 4567,
+                'category[9999]' => 'Furniture',
+                'name[9999]' => 'Armchair',
+                'price[9999]' => '10',
+                'message[9999]' => '',
+            }});
+
+            $body->discard_changes;
+            is_deeply $body->get_extra_metadata('wasteworks_config'), {
+                item_list => [
+                    {
+                        bartec_id => "1234",
+                        category => "Furniture",
+                        message => "test",
+                        name => "Sofa",
+                        price => "0"
+                    },
+                    {
+                        bartec_id => "4567",
+                        category => "Furniture",
+                        message => "",
+                        name => "Armchair",
+                        price => "10"
+                    },
+                ]
+            };
+
+            # delete the first item
+            $mech->submit_form_ok({
+                fields => {
+                    "delete" => "0",
+                },
+                button => "delete",
+            });
+
+            $body->discard_changes;
+            is_deeply $body->get_extra_metadata('wasteworks_config'), {
+                item_list => [
+                    {
+                        bartec_id => "4567",
+                        category => "Furniture",
+                        message => "",
+                        name => "Armchair",
+                        price => "10"
+                    },
+                ]
+            };
+        };
+
+        subtest 'Bartec feature list is shown correctly' => sub {
+            $body->set_extra_metadata(wasteworks_config => {});
+            $body->update;
+
+            $b->mock('Features_Types_Get', sub { [
+                {
+                    Name => "Bookcase",
+                    ID => 6941,
+                    FeatureClass => {
+                        ID => 282
+                    },
+                },
+                {
+                    Name => "Dining table",
+                    ID => 6917,
+                    FeatureClass => {
+                        ID => 282
+                    },
+                },
+                {
+                    Name => "Dishwasher",
+                    ID => 6990,
+                    FeatureClass => {
+                        ID => 283
+                    },
+                },
+            ] });
+
+
+            $mech->get_ok('/admin/waste/' . $body->id . '/bulky_items');
+            $mech->content_contains('<option value="6941">Bookcase</option>') or diag $mech->content;
+            $mech->content_contains('<option value="6917">Dining table</option>');
+            $mech->content_contains('<option value="6990">Dishwasher</option>');
+            $mech->submit_form_ok({ with_fields => {
+                'bartec_id[9999]' => 6941,
+                'category[9999]' => 'Furniture',
+                'name[9999]' => 'Bookcase',
+                'price[9999]' => '0',
+                'message[9999]' => '',
+            }});
+            $mech->content_contains("Updated!");
+
+            $body->discard_changes;
+            is_deeply $body->get_extra_metadata('wasteworks_config'), {
+                item_list => [ {
+                    bartec_id => "6941",
+                    category => "Furniture",
+                    message => "",
+                    name => "Bookcase",
+                    price => "0"
+                }]
+            };
+        };
+
+        subtest 'Feature classes can set in config to limit feature types' => sub {
+            $body->set_extra_metadata(wasteworks_config => { bulky_feature_classes => [ 282 ] });
+            $body->update;
+
+            $mech->get_ok('/admin/waste/' . $body->id . '/bulky_items');
+            $mech->content_contains('<option value="6941">Bookcase</option>') or diag $mech->content;
+            $mech->content_contains('<option value="6917">Dining table</option>');
+            $mech->content_lacks('<option value="6990">Dishwasher</option>');
+        };
+    };
 };
 
 
 sub shared_bartec_mocks {
-        my $b = Test::MockModule->new('Integrations::Bartec');
+    my $b = Test::MockModule->new('Integrations::Bartec');
     $b->mock('Authenticate', sub {
         { Token => { TokenString => "TOKEN" } }
     });
@@ -866,8 +1073,39 @@ sub shared_bartec_mocks {
     $b->mock('Streets_Events_Get', sub { [
         # No open events at present
     ] });
+    $b->mock( 'Premises_FutureWorkpacks_Get', &_future_workpacks );
+    $b->mock( 'WorkPacks_Get',                [] );
+    $b->mock( 'Jobs_Get_for_workpack',        [] );
+    $b->mock('Features_Types_Get', sub { [
+        # No feature types at present
+    ] });
 
     return $b, $jobs_fsd_get;
+}
+
+sub _future_workpacks {
+    [   {   'WorkPackDate' => '2022-08-05T00:00:00',
+            'Actions'      => {
+                'Action' => [ { 'ActionName' => 'Empty Bin 240L Black' } ],
+            },
+        },
+        {   'WorkPackDate' => '2022-08-12T00:00:00',
+            'Actions'      =>
+                { 'Action' => { 'ActionName' => 'Empty Black 240l Bin' } },
+        },
+        {   'WorkPackDate' => '2022-08-19T00:00:00',
+            'Actions'      =>
+                { 'Action' => { 'ActionName' => 'Empty Bin 240L Black' } },
+        },
+        {   'WorkPackDate' => '2022-08-26T00:00:00',
+            'Actions'      =>
+                { 'Action' => { 'ActionName' => 'Empty Bin 240L Black' } },
+        },
+        {   'WorkPackDate' => '2022-09-02T00:00:00',
+            'Actions'      =>
+                { 'Action' => { 'ActionName' => 'Empty Bin 240L Black' } },
+        },
+    ];
 }
 
 done_testing;

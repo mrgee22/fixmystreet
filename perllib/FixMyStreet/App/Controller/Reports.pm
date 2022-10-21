@@ -61,9 +61,14 @@ sub index : Path : Args(0) {
     }
 
     if ($c->stash->{body}) {
-        my $children = $c->stash->{body}->first_area_children;
+        my $children = $c->stash->{body}->area_children;
         unless ($children->{error}) {
             $c->stash->{children} = $children;
+        }
+        my $parish_ward = {};
+        $c->cobrand->call_hook('add_parish_wards' => $parish_ward);
+        unless ($parish_ward->{error}) {
+            $c->stash->{parish_ward} = $parish_ward;
         }
     } else {
         my @bodies = $c->model('DB::Body')->search(undef, {
@@ -171,7 +176,7 @@ sub ward : Path : Args(2) {
 
     # List of wards
     if ( !$c->stash->{wards} && $c->stash->{body}->id && $c->stash->{body}->body_areas->first ) {
-        my $children = $c->stash->{body}->first_area_children;
+        my $children = $c->stash->{body}->area_children;
         unless ($children->{error}) {
             foreach (values %$children) {
                 $_->{url} = $c->uri_for( $c->stash->{body_url}
@@ -179,6 +184,16 @@ sub ward : Path : Args(2) {
                 );
             }
             $c->stash->{children} = $children;
+        }
+        my $parish_ward = {};
+        $c->cobrand->call_hook('add_parish_wards' => $parish_ward);
+        unless ($parish_ward->{error}) {
+            foreach (values %$parish_ward) {
+                $_->{url} = $c->uri_for( $c->stash->{body_url}
+                    . '/' . $c->cobrand->short_name( $_ )
+                );
+            }
+            $c->stash->{parish_ward} = $parish_ward;
         }
     }
 }
@@ -421,6 +436,8 @@ sub ward_check : Private {
     }
 
     my $qw = $c->cobrand->fetch_area_children($parent_id);
+    $c->cobrand->call_hook('add_parish_wards' => $qw);
+
     my %names = map { $c->cobrand->short_name({ name => $_ }) => 1 } @wards;
     my @areas;
     foreach my $area (sort { $a->{name} cmp $b->{name} } values %$qw) {
@@ -484,7 +501,7 @@ sub summary : Private {
 
     $c->stash->{group_by_default} = 'category';
 
-    my $children = $c->stash->{body}->first_area_children;
+    my $children = $c->stash->{body}->area_children;
     $c->stash->{children} = $children;
 
     $c->forward('/admin/fetch_contacts');

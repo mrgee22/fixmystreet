@@ -77,8 +77,6 @@ sub is_two_tier { 1 }
 
 sub get_geocoder { 'OSM' }
 
-sub map_type { 'Northamptonshire' }
-
 sub open311_extra_data_exclude { [ 'emergency' ] }
 
 sub open311_get_update_munging {
@@ -100,6 +98,9 @@ sub should_skip_sending_update {
     if ( $body_users{ $p->user->id } ) {
         return 1;
     }
+
+    my $move = DateTime->new(year => 2022, month => 9, day => 12, hour => 9, minute => 30, time_zone => FixMyStreet->local_time_zone);
+    return 1 if $p->whensent < $move;
 
     return 0;
 }

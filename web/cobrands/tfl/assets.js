@@ -9,20 +9,11 @@ var tilma_url = "https://" + wfs_host + "/mapserver/tfl";
 var streetmanager_url = "https://" + wfs_host + "/streetmanager.php";
 
 var defaults = {
-    http_options: {
-        url: tilma_url,
-        params: {
-            SERVICE: "WFS",
-            VERSION: "1.1.0",
-            REQUEST: "GetFeature",
-            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
-        }
-    },
+    http_wfs_url: tilma_url,
     asset_type: 'spot',
     max_resolution: 2.388657133579254,
     geometryName: 'msGeometry',
-    srsName: "EPSG:3857",
-    strategy_class: OpenLayers.Strategy.FixMyStreet
+    srsName: "EPSG:3857"
 };
 if (fixmystreet.cobrand === 'tfl') {
     // On .com we change the categories depending on where is clicked; on the
@@ -50,11 +41,7 @@ var asset_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "trafficsignals"
-        }
-    },
+    wfs_feature: "trafficsignals",
     asset_id_field: 'Site',
     attributes: {
         site: 'Site',
@@ -64,11 +51,7 @@ fixmystreet.assets.add(asset_defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "busstops"
-        }
-    },
+    wfs_feature: "busstops",
     asset_id_field: 'STOP_CODE',
     attributes: {
         stop_code: 'STOP_CODE',
@@ -79,7 +62,7 @@ fixmystreet.assets.add(asset_defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    http_options: { params: { TYPENAME: "busstations" } },
+    wfs_feature: "busstations",
     asset_id_field: 'Name',
     feature_code: 'Name',
     attributes: { station_name: 'Name' },
@@ -119,6 +102,7 @@ function to_ddmmyyyy(date) {
 }
 
 fixmystreet.assets.add(asset_defaults, {
+    http_wfs_url: '',
     http_options: {
         url: streetmanager_url,
         params: {
@@ -276,11 +260,7 @@ function is_a13dbfo_category(category, bodies) {
 }
 
 var red_routes_layer = fixmystreet.assets.add(defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "RedRoutes"
-        }
-    },
+    wfs_feature: "RedRoutes",
     name: "Red Routes",
     max_resolution: 9.554628534317017,
     road: true,
@@ -320,11 +300,7 @@ if (red_routes_layer) {
 }
 
 fixmystreet.assets.add(defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "A13TLRN_DBFO"
-        }
-    },
+    wfs_feature: "A13TLRN_DBFO",
     max_resolution: 9.554628534317017,
     road: true,
     non_interactive: true,

@@ -178,6 +178,46 @@ sub Premises_Get {
     return \@premises;
 }
 
+sub Premises_FutureWorkpacks_Get {
+    my ( $self, %args ) = @_;
+
+    my $res = $self->call(
+        'Premises_FutureWorkpacks_Get',
+        token    => $self->token,
+        UPRN     => $args{uprn},
+        DateFrom => $args{date_from},
+        DateTo   => $args{date_to},
+    );
+
+    # Already seem to be returned from Bartec in date ascending order, but
+    # we'll sort just in case
+    my $workpacks = force_arrayref( $res, 'Premises_FutureWorkPack' );
+    @$workpacks
+        = sort { $a->{WorkPackDate} cmp $b->{WorkPackDate} } @$workpacks;
+    return $workpacks;
+}
+
+sub WorkPacks_Get {
+    my ( $self, %args ) = @_;
+
+    my $res = $self->call(
+        'WorkPacks_Get',
+        token => $self->token,
+        Date  => {
+            MinimumDate => {
+                attr  => { xmlns => "http://www.bartec-systems.com" },
+                value => $args{date_from},
+            },
+            MaximumDate => {
+                attr  => { xmlns => "http://www.bartec-systems.com" },
+                value => $args{date_to},
+            },
+        },
+    );
+
+    return force_arrayref( $res, 'WorkPack' );
+}
+
 sub Jobs_Get {
     my ($self, $uprn) = @_;
 
@@ -203,6 +243,19 @@ sub Jobs_Get {
     my $jobs = force_arrayref($res, 'Jobs');
     @$jobs = sort { $a->{ScheduledStart} cmp $b->{ScheduledStart} } map { $_->{Job} } @$jobs;
     return $jobs;
+}
+
+# TODO Merge with Jobs_Get() above
+sub Jobs_Get_for_workpack {
+    my ( $self, $workpack_id ) = @_;
+
+    my $res = $self->call(
+        'Jobs_Get',
+        token      => $self->token,
+        WorkPackID => $workpack_id,
+    );
+
+    return force_arrayref( $res, 'Jobs' );
 }
 
 sub Jobs_FeatureScheduleDates_Get {
@@ -298,6 +351,18 @@ sub Streets_Events_Get {
     my $events = $self->call('Streets_Events_Get',
         token => $self->token, USRN => $usrn, StartDate => $from->iso8601 );
     return force_arrayref($events, 'Event');
+}
+
+sub Features_Types_Get {
+    my ($self) = @_;
+    # This expensive operation doesn't take any params so may as well cache it
+    my $key = "peterborough:bartec:Features_Types_Get";
+    my $types = Memcached::get($key);
+    unless ($types) {
+        $types = force_arrayref($self->call('Features_Types_Get', token => $self->token), 'FeatureType');
+        Memcached::set($key, $types, 60*30);
+    }
+    return $types;
 }
 
 1;

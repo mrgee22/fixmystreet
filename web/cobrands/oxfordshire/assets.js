@@ -43,8 +43,7 @@ var defaults = {
     max_resolution: 4.777314267158508,
     geometryName: 'msGeometry',
     srsName: "EPSG:3857",
-    body: "Oxfordshire County Council",
-    strategy_class: OpenLayers.Strategy.FixMyStreet
+    body: "Oxfordshire County Council"
 };
 
 var asset_fillColor = fixmystreet.cobrand === "oxfordshire" ? "#007258" : "#FFFF00";
@@ -371,22 +370,15 @@ fixmystreet.assets.add(owned_base, {
     owns_function: occ_owns_bridge
 });
 
-var road_occ_maintainable = 'Maintainable at Public Expense';
-
-function road_owned(f) {
-    return f &&
-           f.attributes &&
-           f.attributes.STREET_MAINTENANCE_RESPONSIBILITY_NAME &&
-           f.attributes.STREET_MAINTENANCE_RESPONSIBILITY_NAME.lastIndexOf(road_occ_maintainable, 0) === 0;
-}
-
 fixmystreet.assets.add(defaults, {
     stylemap: fixmystreet.assets.stylemap_invisible,
-    wfs_feature: "OCCRoads",
-    propertyNames: ['TYPE1_2_USRN', 'STREET_MAINTENANCE_RESPONSIBILITY_NAME', 'msGeometry'],
+    wfs_url: proxy_base_url + 'nsg/',
+    wfs_feature: 'MAINTAINABLE_AT_PUBLIC_EXPENSE_FMS',
+    geometryName: 'SHAPE_GEOMETRY',
+    propertyNames: ['UNIQUE_STREET_REFERENCE_NUMBER', 'SHAPE_GEOMETRY'],
     srsName: "EPSG:27700",
     usrn: {
-        attribute: 'TYPE1_2_USRN',
+        attribute: 'UNIQUE_STREET_REFERENCE_NUMBER',
         field: 'usrn'
     },
     non_interactive: true,
@@ -395,9 +387,7 @@ fixmystreet.assets.add(defaults, {
     asset_item: 'road',
     asset_type: 'road',
     actions: {
-        found: function(layer, feature) {
-            fixmystreet.message_controller.road_found(layer, feature, road_owned, '#js-not-a-road');
-        },
+        found: fixmystreet.message_controller.road_found,
         not_found: fixmystreet.message_controller.road_not_found
     },
     asset_category: road_categories
@@ -522,7 +512,6 @@ var base_light_url = base_host + "/alloy/oxfordshire-lights.php?url=" + base_pro
 var oxfordshire_defaults = {
   format_class: OpenLayers.Format.GeoJSON,
   srsName: "EPSG:4326",
-  strategy_class: OpenLayers.Strategy.FixMyStreet,
   class: OpenLayers.Layer.VectorAssetMove,
   non_interactive: false,
   body: "Oxfordshire County Council",
