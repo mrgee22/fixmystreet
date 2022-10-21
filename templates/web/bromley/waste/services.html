@@ -27,13 +27,12 @@
         <span class="govuk-warning-text__assistive">Warning</span>
         <h3 class="govuk-heading-l govuk-warning-text__heading">Your subscription is now overdue.</h3>    
         Collections have been paused. They'll start again when you renew.
-        [% IF current_payment_method == 'direct_debit' %]
-            <p>This property may have an existing direct debit subscription which will renew automatically, please check before renewing.</p>
+        [% WRAPPER 'waste/_garden_status_messages.html' %]
+            <form method="post" action="[% c.uri_for_action('waste/garden_renew', [ property.id ]) %]">
+              <input type="hidden" name="token" value="[% csrf_token %]">
+              <input type="submit" value="Renew subscription today" class="govuk-button">
+            </form>
         [% END %]
-        <form method="post" action="[% c.uri_for_action('waste/garden_renew', [ property.id ]) %]">
-          <input type="hidden" name="token" value="[% csrf_token %]">
-          <input type="submit" value="Renew subscription today" class="govuk-button">
-        </form>
     </div>
   </div>
 
@@ -41,10 +40,12 @@
   <span class="waste-service-descriptor" style="margin-top: 1.5em;">Please note that missed collections can only be reported within 2 working days of your scheduled collection day.</span>
 [% END %]
   <a href="[% c.uri_for_action('waste/enquiry', [ property.id ]) %]?template=problem&amp;service_id=[% unit.service_id %]" class="waste-service-link waste-service-descriptor">Report a problem with a [% unit.service_name FILTER lower %] collection</a>
-[% IF unit.request_open %]
+[% IF unit.requests_open.size %]
   <span class="waste-service-descriptor">
     A new [% unit.service_name FILTER lower %] container request has been made
-    [% IF unit.request_open.report %] – <a href="[% unit.request_open.report.url %]" class="waste-service-link">check status</a>[% END %]
+    [% FOR req IN unit.requests_open.values %]
+        [% IF req.report %] – <a href="[% req.report.url %]" class="waste-service-link">check status</a>[% END %]
+    [% END %]
   </span>
 [% ELSIF unit.request_allowed %]
   [% any_request_allowed = 1 %]
@@ -74,15 +75,13 @@
         ">[% date.format(unit.end_date _ ' 00:00:00', '%d %B %Y') %][% ' Cancellation in progress' IF pending_cancellation %][% ', soon due for renewal.' IF unit.garden_due && !unit.garden_overdue %][% ', subscription overdue.' IF unit.garden_overdue %]</dd>
       </div>
     </dl>
-
-  [% IF ( ( unit.garden_due && current_payment_method != 'direct_debit' ) || unit.garden_overdue ) %]
-      [% IF current_payment_method == 'direct_debit' %]
-        <p>This property may have an existing direct debit subscription which will renew automatically, please check before renewing.</p>
-      [% END %]
-  <form method="post" action="[% c.uri_for_action('waste/garden_renew', [ property.id ]) %]">
+  [% WRAPPER 'waste/_garden_status_messages.html' %]
+   [% IF unit.garden_due || unit.garden_overdue %]
+    <form method="post" action="[% c.uri_for_action('waste/garden_renew', [ property.id ]) %]">
     <input type="hidden" name="token" value="[% csrf_token %]">
     <input type="submit" value="Renew your [% unit.service_name FILTER lower %] subscription" class="waste-service-descriptor waste-service-link">
   </form>
+   [% END %]
   [% END %]
   [% IF NOT pending_cancellation && NOT unit.garden_overdue %]
   [% IF NOT unit.garden_due %]

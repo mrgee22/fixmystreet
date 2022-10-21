@@ -286,7 +286,7 @@ sub open311_munge_update_params {
 
     # Waste reports are sent to our Open311 endpoint, not Bromley's,
     # and we don't want to make changes to parameters in that case.
-    return if $comment->problem->cobrand_data eq 'waste';
+    return if ($comment->problem->cobrand_data || '') eq 'waste';
 
     delete $params->{update_id};
     $params->{public_anonymity_required} = $comment->anonymous ? 'TRUE' : 'FALSE',
@@ -411,6 +411,19 @@ sub image_for_unit {
         545 => "$base/bin-black-brown-lid-recycling",
     };
     return $images->{$service_id};
+}
+
+sub waste_on_the_day_criteria {
+    my ($self, $completed, $state, $now, $row) = @_;
+
+    if ($state eq 'Outstanding' && $now->hour < 17) {
+        $row->{next} = $row->{last};
+        $row->{next}{state} = 'In progress';
+        delete $row->{last};
+    }
+    if (!$completed && $now->hour < 17) {
+        $row->{report_allowed} = 0;
+    }
 }
 
 sub waste_staff_choose_payment_method { 0 }
@@ -549,7 +562,10 @@ sub bin_services_for_address {
 
     # If there is an open Garden subscription (2106) event, assume
     # that means a bin is being delivered and so a pending subscription
-    $self->{c}->stash->{pending_subscription} = $events->{enquiry}{2106} ? { title => 'Garden Subscription - New' } : undef;
+    if ($events->{enquiry}{2106}) {
+        $self->{c}->stash->{pending_subscription} = { title => 'Garden Subscription - New' };
+        $self->{c}->stash->{open_garden_event} = 1;
+    }
 
     my @to_fetch;
     my %schedules;
@@ -582,7 +598,7 @@ sub bin_services_for_address {
         my $servicetask = $self->_get_current_service_task($_);
 
         my $containers = $service_to_containers{$service_id};
-        my ($open_request) = grep { $_ } map { $events->{request}->{$_} } @$containers;
+        my $open_requests = { map { $_ => $events->{request}->{$_} } grep { $events->{request}->{$_} } @$containers };
 
         my $request_max = $quantity_max{$service_id};
 
@@ -622,7 +638,7 @@ sub bin_services_for_address {
             garden_due => $garden_due,
             garden_overdue => $garden_overdue,
             request_allowed => $request_allowed{$service_id} && $request_max && $schedules->{next},
-            request_open => $open_request,
+            requests_open => $open_requests,
             request_containers => $containers,
             request_max => $request_max,
             service_task_id => $servicetask->{Id},
@@ -677,15 +693,14 @@ sub _parse_events {
         next if $type ne 'missed' && $closed;
 
         if ($type eq 'request') {
-            my $data = $_->{Data} ? $_->{Data}{ExtensibleDatum} : [];
+            my $data = Integrations::Echo::force_arrayref($_->{Data}, 'ExtensibleDatum');
             my $container;
             DATA: foreach (@$data) {
-                if ($_->{ChildData}) {
-                    foreach (@{$_->{ChildData}{ExtensibleDatum}}) {
-                        if ($_->{DatatypeName} eq 'Container Type') {
-                            $container = $_->{Value};
-                            last DATA;
-                        }
+                my $moredata = Integrations::Echo::force_arrayref($_->{ChildData}, 'ExtensibleDatum');
+                foreach (@$moredata) {
+                    if ($_->{DatatypeName} eq 'Container Type') {
+                        $container = $_->{Value};
+                        last DATA;
                     }
                 }
             }

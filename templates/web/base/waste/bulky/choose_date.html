@@ -1,0 +1,25 @@
+[% SET title = form.title ~%]
+[% PROCESS 'waste/header.html' %]
+
+  [% PROCESS 'govuk/fields.html' %]
+  [% PROCESS back %]
+  [% PROCESS errors %]
+  [% PROCESS title %]
+  [% IF property %]
+    [% INCLUDE 'waste/_address_display.html' %]
+  [% END %]
+<form class="waste" method="post">
+  [% PROCESS form %]
+  [% IF form.current_page.name == 'choose_date_earlier' && !form.field('chosen_date').options.size %]
+    <p>
+      There are no slots available in the next 90 days. Please refer to information regarding and link to information about taking waste to the local <a href='https://www.peterborough.gov.uk/residents/rubbish-and-recycling/household-recycling-centre'>Household Waste Recycling Centre</a>.
+    </p>
+  [% END %]
+  [% IF form.current_page.name == 'choose_date_later' && !form.field('chosen_date').options.size %]
+    <p>
+      No later dates found.
+    </p>
+  [% END %]
+</form>
+
+[% INCLUDE footer.html %]

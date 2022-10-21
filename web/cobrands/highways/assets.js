@@ -5,29 +5,16 @@ if (!fixmystreet.maps) {
 }
 
 var defaults = {
-    http_options: {
-        url: "https://tilma.mysociety.org/mapserver/highways",
-        params: {
-            SERVICE: "WFS",
-            VERSION: "1.1.0",
-            REQUEST: "GetFeature",
-            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
-        }
-    },
+    http_wfs_url: "https://tilma.mysociety.org/mapserver/highways",
     asset_type: 'area',
     // this covers zoomed right out on Cumbrian sections of
     // the M6
     max_resolution: 20,
-    srsName: "EPSG:900913",
-    strategy_class: OpenLayers.Strategy.FixMyStreet
+    srsName: "EPSG:3857"
 };
 
 fixmystreet.assets.add(defaults, {
-    http_options: {
-        params: {
-            TYPENAME: "Highways"
-        }
-    },
+    wfs_feature: "Highways",
     stylemap: fixmystreet.assets.stylemap_invisible,
     always_visible: true,
 
@@ -112,6 +99,14 @@ function he_selected() {
     fixmystreet.body_overrides.allow_send('National Highways');
     regenerate_category(true);
     $(fixmystreet).trigger('report_new:highways_change');
+    if (window.location.href.indexOf('&he_referral=1') != -1) {
+        $('#problem_form .js-reporting-page--next').click();
+        var message = "<div class='box-warning' id='national-highways-referral'>Please select the local council's most appropriate option for the litter or flytipping issue you would like to report.</div>";
+        $('#js-top-message').append(message);
+        $('.js-reporting-page--next').on('click', function() {
+            $('#national-highways-referral').remove();
+        });
+    }
 }
 
 function he_council_litter_cat_selected() {

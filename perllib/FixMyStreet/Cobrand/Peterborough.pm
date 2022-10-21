@@ -4,6 +4,8 @@ use parent 'FixMyStreet::Cobrand::Whitelabel';
 use utf8;
 use strict;
 use warnings;
+use DateTime;
+use DateTime::Format::Strptime;
 use Integrations::Bartec;
 use List::Util qw(any);
 use Sort::Key::Natural qw(natkeysort_inplace);
@@ -24,6 +26,31 @@ sub default_map_zoom { 5 }
 sub send_questionnaires { 0 }
 
 sub max_title_length { 50 }
+
+sub service_name_override {
+    return {
+        "Empty Bin 240L Black"      => "Black Bin",
+        "Empty Bin 240L Brown"      => "Brown Bin",
+        "Empty Bin 240L Green"      => "Green Bin",
+        "Empty Black 240l Bin"      => "Black Bin",
+        "Empty Brown 240l Bin"      => "Brown Bin",
+        "Empty Green 240l Bin"      => "Green Bin",
+        "Empty Bin Recycling 1100l" => "Recycling Bin",
+        "Empty Bin Recycling 240l"  => "Recycling Bin",
+        "Empty Bin Recycling 660l"  => "Recycling Bin",
+        "Empty Bin Refuse 1100l"    => "Refuse",
+        "Empty Bin Refuse 240l"     => "Refuse",
+        "Empty Bin Refuse 660l"     => "Refuse",
+    };
+}
+
+# XXX Use config to set max daily slots etc.
+sub bulky_collection_window_days     {90}
+sub max_daily_bulky_collection_slots {40}
+sub max_bulky_collection_dates       {4}
+sub bulky_workpack_name {
+    qr/Waste-(BULKY WASTE|WHITES)-(?<date_suffix>\d{6})/;
+}
 
 sub disambiguate_location {
     my $self    = shift;
@@ -417,11 +444,18 @@ sub clear_cached_lookups_postcode {
 sub clear_cached_lookups_property {
     my ($self, $uprn) = @_;
 
+    # might be prefixed with postcode if it's come straight from the URL
+    $uprn =~ s/^.+\://g;
+
     foreach ( qw/look_up_property bin_services_for_address property_attributes/ ) {
         delete $self->{c}->session->{"peterborough:bartec:$_:$uprn"};
     }
-}
 
+    for (qw/earlier later/) {
+        delete $self->{c}
+            ->session->{"peterborough:bartec:available_bulky_slots:$_:$uprn"};
+    }
+}
 
 sub bin_addresses_for_postcode {
     my $self = shift;
@@ -476,25 +510,170 @@ sub image_for_unit {
     return $images->{$service_id};
 }
 
+# XXX
+# Error handling
+# Holidays, bank holidays?
+# Monday limit, Tuesday limit etc.?
+# Check which bulky collections are pending, open
+# Check if collection is free or chargeable
+sub find_available_bulky_slots {
+    my ( $self, $property, $last_earlier_date_str ) = @_;
+
+    my $key
+        = 'peterborough:bartec:available_bulky_slots:'
+        . ( $last_earlier_date_str ? 'later' : 'earlier' ) . ':'
+        . $property->{uprn};
+    return $self->{c}->session->{$key} if $self->{c}->session->{$key};
+
+    my $bartec = $self->feature('bartec');
+    $bartec = Integrations::Bartec->new(%$bartec);
+
+    my $window    = _bulky_collection_window($last_earlier_date_str);
+    if ( $window->{error} ) {
+        # XXX Handle error gracefully
+        die $window->{error};
+    }
+    my $workpacks = $bartec->Premises_FutureWorkpacks_Get(
+        date_from => $window->{date_from},
+        date_to   => $window->{date_to},
+        uprn      => $property->{uprn},
+    );
+
+    my @available_slots;
+
+    my $suffix_date_parser
+        = DateTime::Format::Strptime->new( pattern => '%d%m%y' );
+    my $workpack_date_pattern = '%FT%T';
+    my $workpack_date_parser
+        = DateTime::Format::Strptime->new(
+        pattern => $workpack_date_pattern );
+
+    my $last_workpack_date;
+    for my $workpack (@$workpacks) {
+        # Depending on the Collective API version (R1531 or R1611),
+        # $workpack->{Actions} can be an arrayref or a hashref.
+        # If a hashref, it may be an action structure of the form
+        # { 'ActionName' => ... },
+        # or it may have the key {Action}.
+        # $workpack->{Actions}{Action} can also be an arrayref or hashref.
+        # From this variety of structures, we want to get an arrayref of
+        # action hashrefs of the form [ { 'ActionName' => ... }, {...} ].
+        my $action_data = $workpack->{Actions};
+        if ( ref $action_data eq 'HASH' ) {
+            if ( exists $action_data->{Action} ) {
+                $action_data = $action_data->{Action};
+                $action_data = [$action_data] if ref $action_data eq 'HASH';
+            } else {
+                $action_data = [$action_data];
+            }
+        }
+
+        my %action_hash = map {
+            my $action_name = $_->{ActionName} // '';
+            $action_name = service_name_override()->{$action_name}
+                // $action_name;
+
+            $action_name => $_;
+        } @$action_data;
+
+        # We only want dates that coincide with black bin collections
+        next if !exists $action_hash{'Black Bin'};
+
+        # This case shouldn't occur, but in case there are multiple black bin
+        # workpacks for the same date, we only take the first into account
+        next if $workpack->{WorkPackDate} eq ( $last_workpack_date // '' );
+
+        my $workpack_dt = $workpack_date_parser->parse_datetime(
+            $workpack->{WorkPackDate} );
+        next unless $workpack_dt;
+
+        my $date_from
+            = $workpack_dt->clone->set( hour => 0, minute => 0, second => 0 )
+            ->strftime($workpack_date_pattern);
+        my $date_to = $workpack_dt->clone->set(
+            hour   => 23,
+            minute => 59,
+            second => 59,
+        )->strftime($workpack_date_pattern);
+        my $workpacks_for_day = $bartec->WorkPacks_Get(
+            date_from => $date_from,
+            date_to   => $date_to,
+        );
+
+        my %jobs_per_uprn;
+        for my $wpfd (@$workpacks_for_day) {
+            next if $wpfd->{Name} !~ bulky_workpack_name();
+
+            # Ignore workpacks with names with faulty date suffixes
+            my $suffix_dt
+                = $suffix_date_parser->parse_datetime( $+{date_suffix} );
+
+            next
+                if !$suffix_dt
+                || $workpack_dt->date ne $suffix_dt->date;
+
+            my $jobs = $bartec->Jobs_Get_for_workpack( $wpfd->{ID} ) || [];
+
+            # Group jobs by UPRN. For a bulky workpack, a UPRN/premises may
+            # have multiple jobs (equivalent to item slots); these all count
+            # as a single bulky collection slot.
+            $jobs_per_uprn{ $_->{Job}{UPRN} }++ for @$jobs;
+        }
+
+        my $total_collection_slots = keys %jobs_per_uprn;
+
+        # Only include if max jobs not already reached
+        push @available_slots => {
+            workpack_id => $workpack->{id},
+            date        => $workpack->{WorkPackDate},
+            }
+            if $total_collection_slots < max_daily_bulky_collection_slots();
+
+        $last_workpack_date = $workpack->{WorkPackDate};
+
+        # Provision of $last_earlier_date_str implies we want to fetch all
+        # remaining available slots in the given window, so we ignore the
+        # limit
+        last
+            if !$last_earlier_date_str
+            && @available_slots == max_bulky_collection_dates();
+    }
+
+    $self->{c}->session->{$key} = \@available_slots;
+
+    return \@available_slots;
+}
+
+sub _bulky_collection_window {
+    my $last_earlier_date_str = shift;
+    my $fmt            = '%F';
+
+    my $start_date;
+    if ($last_earlier_date_str) {
+        $start_date
+            = DateTime::Format::Strptime->new( pattern => $fmt )
+            ->parse_datetime($last_earlier_date_str);
+
+        return { error => 'Invalid date provided' } unless $start_date;
+
+        $start_date->add( days => 1 );
+    }
+
+    my $today = DateTime->today( time_zone => FixMyStreet->local_time_zone );
+    my $date_to
+        = $today->clone->add( days => bulky_collection_window_days() );
+
+    return {
+        date_from => $start_date
+        ? $start_date->strftime($fmt)
+        : $today->strftime($fmt),
+        date_to => $date_to->strftime($fmt),
+    };
+}
 
 sub bin_services_for_address {
     my $self = shift;
     my $property = shift;
-
-    my %service_name_override = (
-        "Empty Bin 240L Black" => "Black Bin",
-        "Empty Bin 240L Brown" => "Brown Bin",
-        "Empty Bin 240L Green" => "Green Bin",
-        "Empty Black 240l Bin" => "Black Bin",
-        "Empty Brown 240l Bin" => "Brown Bin",
-        "Empty Green 240l Bin" => "Green Bin",
-        "Empty Bin Recycling 1100l" => "Recycling Bin",
-        "Empty Bin Recycling 240l" => "Recycling Bin",
-        "Empty Bin Recycling 660l" => "Recycling Bin",
-        "Empty Bin Refuse 1100l" => "Refuse",
-        "Empty Bin Refuse 240l" => "Refuse",
-        "Empty Bin Refuse 660l" => "Refuse",
-    );
 
     $self->{c}->stash->{containers} = {
         # For new containers
@@ -639,23 +818,25 @@ sub bin_services_for_address {
         # Open request for same thing, or for all bins, or for large black bin
         my @request_service_ids_open = grep { $open_requests->{$_} || $open_requests->{425} || ($_ == 419 && $open_requests->{422}) } @$request_service_ids;
 
+        my %requests_open = map { $_ => 1 } @request_service_ids_open;
+
         my $last_obj = { date => $last, ordinal => ordinal($last->day) } if $last;
         my $next_obj = { date => $next, ordinal => ordinal($next->day) } if $next;
         my $row = {
             id => $_->{JobID},
             last => $last_obj,
             next => $next_obj,
-            service_name => $service_name_override{$name} || $name,
+            service_name => service_name_override()->{$name} || $name,
             schedule => $schedules{$name}->{Frequency},
             service_id => $container_id,
-            request_containers => $container_request_ids{$container_id},
+            request_containers => $request_service_ids,
 
             # can this container type be requested?
             request_allowed => $container_request_ids{$container_id} ? 1 : 0,
             # what's the maximum number of this container that can be request?
             request_max => $container_request_max{$container_id} || 0,
             # is there already an open bin request for this container?
-            request_open => @request_service_ids_open ? 1 : 0,
+            requests_open => \%requests_open,
             # can this collection be reported as having been missed?
             report_allowed => $last ? $self->_waste_report_allowed($last) : 0,
             # is there already a missed collection report open for this container
@@ -899,6 +1080,31 @@ sub waste_munge_request_data {
     $data->{category} = $self->body->contacts->find({ email => "Bartec-$id" })->category;
 }
 
+sub waste_munge_bulky_data {
+    my ($self, $data) = @_;
+
+    my $c = $self->{c};
+
+    $data->{title} = "Bulky goods collection";
+    $data->{detail} = "Address: " . $c->stash->{property}->{address};
+    $data->{extra_DATE} = $data->{chosen_date};
+
+    # XXX loop here, plus might be more than 5 in future
+    $data->{extra_ITEM_01} = $data->{item1};
+    $data->{extra_ITEM_02} = $data->{item2};
+    $data->{extra_ITEM_03} = $data->{item3};
+    $data->{extra_ITEM_04} = $data->{item4};
+    $data->{extra_ITEM_05} = $data->{item5};
+
+    $data->{extra_CHARGEABLE} = 'CHARGED'; # XXX not necessarily true
+
+    $data->{"extra_CREW NOTES"} = $data->{location};
+
+    # XXX what about photos?
+
+    $data->{category} = "Bulky collection";
+}
+
 sub waste_munge_report_data {
     my ($self, $id, $data) = @_;
     my $c = $self->{c};
@@ -950,7 +1156,7 @@ sub waste_munge_problem_data {
     my $c = $self->{c};
 
     my $service_details = $self->{c}->stash->{services_problems}->{$id};
-    my $container_id = $service_details->{container};
+    my $container_id = $service_details->{container} || 0; # 497 doesn't have a container
 
     my $category = $self->body->contacts->find({ email => "Bartec-$id" })->category;
     my $category_verbose = $service_details->{label};
@@ -974,7 +1180,7 @@ sub waste_munge_problem_data {
         $data->{detail} .= "\n\nReason: Cracked bin\n\nPlease remove cracked bin.";
     } else {
         $data->{title} = $category =~ /Lid|Wheels/ ? "Damaged $bin bin" :
-                         $category =~ /Not returned/ ? "$bin bin not returned" : $bin;
+                         $category =~ /Not returned/ ? "Bin not returned" : $bin;
         $data->{detail} = "$category_verbose\n\n" . $c->stash->{property}->{address};
     }
 
@@ -1120,6 +1326,24 @@ sub available_permissions {
     }
 
     return $perms;
+}
+
+sub bulky_available_feature_types {
+    my $self = shift;
+
+    return unless $self->feature('waste_features')->{bulky_enabled};
+
+    my $cfg = $self->feature('bartec');
+    my $bartec = Integrations::Bartec->new(%$cfg);
+    my @types = @{ $bartec->Features_Types_Get() };
+
+    # Limit to the feature types that are for bulky waste
+    my $waste_cfg = $self->body->get_extra_metadata("wasteworks_config", {});
+    if ( my $classes = $waste_cfg->{bulky_feature_classes} ) {
+        my %classes = map { $_ => 1 } @$classes;
+        @types = grep { $classes{$_->{FeatureClass}->{ID}} } @types;
+    }
+    return { map { $_->{ID} => $_->{Name} } @types };
 }
 
 1;

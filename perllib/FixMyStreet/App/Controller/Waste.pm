@@ -350,6 +350,7 @@ sub populate_dd_details : Private {
 sub direct_debit : Path('dd') : Args(0) {
     my ($self, $c) = @_;
 
+    $c->cobrand->call_hook('waste_report_extra_dd_data');
     $c->forward('populate_dd_details');
     $c->stash->{template} = 'waste/dd.html';
     $c->detach;
@@ -393,18 +394,25 @@ sub direct_debit_error : Path('dd_error') : Args(0) {
     my ($token, $id) = $c->cobrand->call_hook( 'garden_waste_dd_get_redirect_params' => $c );
     if ( $id && $token ) {
         $c->forward('check_payment_redirect_id', [ $id, $token ]);
+        my $p = $c->stash->{report};
+        $c->stash->{property} = $c->cobrand->call_hook(look_up_property => $p->get_extra_field_value('property_id'));
         $c->forward('populate_dd_details');
     }
 
     $c->stash->{template} = 'waste/dd_error.html';
 }
 
-sub direct_debit_modify : Path('dd_amend') : Args(0) {
+sub direct_debit_modify : Private {
     my ($self, $c) = @_;
 
     my $p = $c->stash->{report};
 
-    my $pro_rata = $p->get_extra_field_value('pro_rata');
+    my $ref = $c->stash->{orig_sub}->get_extra_metadata('payerReference');
+    $p->set_extra_metadata(payerReference => $ref);
+    $p->update;
+    $c->cobrand->call_hook('waste_report_extra_dd_data');
+
+    my $pro_rata = $p->get_extra_field_value('pro_rata') || 0;
     my $admin_fee = $p->get_extra_field_value('admin_fee') || 0;
     my $total = $p->get_extra_field_value('payment');
 
@@ -416,7 +424,7 @@ sub direct_debit_modify : Path('dd_amend') : Args(0) {
     if ( $ad_hoc ) {
         my $one_off_ref = $i->one_off_payment( {
                 # this will be set when the initial payment is confirmed
-                payer_reference => $c->stash->{orig_sub}->get_extra_metadata('payerReference'),
+                payer_reference => $ref,
                 amount => sprintf('%.2f', $ad_hoc / 100),
                 reference => $p->id,
                 comments => '',
@@ -426,22 +434,26 @@ sub direct_debit_modify : Path('dd_amend') : Args(0) {
     }
 
     my $update_ref = $i->amend_plan( {
-        payer_reference => $c->stash->{orig_sub}->get_extra_metadata('payerReference'),
+        payer_reference => $ref,
         amount => sprintf('%.2f', $total / 100),
         orig_sub => $c->stash->{orig_sub},
     } );
 }
 
-sub direct_debit_cancel_sub : Path('dd_cancel_sub') : Args(0) {
+sub direct_debit_cancel_sub : Private {
     my ($self, $c) = @_;
 
     my $p = $c->stash->{report};
+    my $ref = $c->stash->{orig_sub}->get_extra_metadata('payerReference');
+    $p->set_extra_metadata(payerReference => $ref);
+    $p->update;
+    $c->cobrand->call_hook('waste_report_extra_dd_data');
 
     my $i = $c->cobrand->get_dd_integration;
 
     $c->stash->{payment_method} = 'direct_debit';
     my $update_ref = $i->cancel_plan( {
-        payer_reference => $c->stash->{orig_sub}->get_extra_metadata('payerReference'),
+        payer_reference => $ref,
         report => $p,
     } );
 }
@@ -517,7 +529,7 @@ sub property : Chained('/') : PathPart('waste') : CaptureArgs(1) {
     $c->forward('/auth/get_csrf_token');
 
     # clear this every time they visit this page to stop stale content.
-    if ( $c->req->path =~ m#^waste/[:\w ]+$#i ) {
+    if ( $c->req->path =~ m#^waste/[:\w %]+$#i ) {
         $c->cobrand->call_hook( clear_cached_lookups_property => $id );
     }
 
@@ -546,6 +558,11 @@ sub bin_days : Chained('property') : PathPart('') : Args(0) {
     my $cfg = $c->cobrand->feature('waste_features');
 
     return if $staff || (!$cfg->{max_requests_per_day} && !$cfg->{max_properties_per_day});
+
+    # Bulky goods has a new design for the bin days page
+    if ($cfg->{bulky_enabled}) {
+        $c->stash->{template} = 'waste/bin_days_bulky.html';
+    }
 
     # Allow lookups of max_per_day different properties per day
     my $today = DateTime->today->set_time_zone(FixMyStreet->local_time_zone)->ymd;
@@ -641,7 +658,7 @@ sub construct_bin_request_form {
                 label => $name,
                 option_label => $c->stash->{containers}->{$id},
                 tags => { toggle => "form-quantity-$id-row" },
-                disabled => $_->{request_open} ? 1 : 0,
+                disabled => $_->{requests_open}{$id} ? 1 : 0,
             };
             $name = ''; # Only on first container
             if ($max == 1) {
@@ -938,6 +955,22 @@ sub bulky : Chained('bulky_setup') : Args(0) {
     $c->forward('form');
 }
 
+sub process_bulky_data : Private {
+    my ($self, $c, $form) = @_;
+    my $data = $form->saved_data;
+
+    $c->cobrand->call_hook("waste_munge_bulky_data", $data);
+
+    # Read extra details in loop
+    foreach (grep { /^extra_/ } keys %$data) {
+        my ($id) = /^extra_(.*)/;
+        $c->set_param($id, $data->{$_});
+    }
+    $c->forward('add_report', [ $data ]) or return;
+    return 1;
+}
+
+
 
 sub garden_setup : Chained('property') : PathPart('') : CaptureArgs(0) {
     my ($self, $c) = @_;
@@ -1119,7 +1152,7 @@ sub process_garden_cancellation : Private {
     $c->set_param('Subscription_End_Date', $now->ymd);
 
     my $service = $c->cobrand->garden_current_subscription;
-    if (!$c->stash->{garden_sacks} || $service->{garden_container} == 26) {
+    if (!$c->stash->{garden_sacks} || $service->{garden_container} == 26 || $service->{garden_container} == 27) {
         my $bin_count = $c->cobrand->get_current_garden_bins;
         $data->{new_bins} = $bin_count * -1;
     } else {
@@ -1134,9 +1167,6 @@ sub process_garden_cancellation : Private {
         $c->stash->{report}->update;
     } else {
         if ( $payment_method eq 'direct_debit' ) {
-            my $report = $c->stash->{report};
-            $report->set_extra_metadata('payerReference', $c->stash->{orig_sub}->get_extra_metadata('payerReference'));
-            $report->update;
             $c->forward('direct_debit_cancel_sub');
         } else {
             $c->stash->{report}->confirm;
@@ -1179,7 +1209,9 @@ sub get_original_sub : Private {
         });
     }
 
-    $c->stash->{orig_sub} = $p->first;
+    my $r = $c->stash->{orig_sub} = $p->first;
+    $c->cobrand->call_hook(waste_check_existing_dd => $r)
+        if $r && ($r->get_extra_field_value('payment_method') || '') eq 'direct_debit';
 }
 
 sub setup_garden_sub_params : Private {
@@ -1256,9 +1288,6 @@ sub process_garden_modification : Private {
         if ( $pro_rata && $c->stash->{staff_payments_allowed} eq 'paye' ) {
             $c->forward('csc_code');
         } elsif ( $payment_method eq 'direct_debit' ) {
-            my $report = $c->stash->{report};
-            $report->set_extra_metadata('payerReference', $c->stash->{orig_sub}->get_extra_metadata('payerReference'));
-            $report->update;
             $c->forward('direct_debit_modify');
         } elsif ( $pro_rata ) {
             $c->forward('pay', [ 'garden_modify' ]);
@@ -1414,7 +1443,7 @@ sub add_report : Private {
     if ($c->user_exists) {
         if ($c->user->from_body && !$data->{email} && !$data->{phone}) {
             $c->set_param('form_as', 'anonymous_user');
-        } elsif ($c->user->from_body && $c->user->email ne $data->{email}) {
+        } elsif ($c->user->from_body && $c->user->email ne ($data->{email} || '')) {
             $c->set_param('form_as', 'another_user');
         }
         $c->set_param('username', $data->{email} || $data->{phone});

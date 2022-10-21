@@ -16,13 +16,13 @@
 [% ELSE %]
 
  [% IF 0 %][%# At present %]
-  <span class="waste-service-descriptor" style="margin-top: 1.5em;">Please note that missed collections can only be reported within 2 working days of your scheduled collection day.</span>
+  <span class="waste-service-descriptor" style="margin-top: 1.5em;">Please note that missed collections can only be reported after 6pm on your scheduled collection day and for 2 working days after your scheduled collection.</span>
  [% END %]
 [% END %]
 
 [% END %]
 
-[% IF unit.request_open %]
+[% IF unit.requests_open.size %]
   <span class="waste-service-descriptor">
     A new [% unit.service_name FILTER lower %] container request has been made
   </span>
@@ -30,7 +30,7 @@
   [% any_request_allowed = 1 %]
   <form method="post" action="[% c.uri_for_action('waste/request', [ property.id ]) %]">
     <input type="hidden" name="token" value="[% csrf_token %]">
-    <input type="hidden" name="container-[% unit.request_containers.0 %]" value="1">
+    <input type="hidden" name="container-choice" value ="[% unit.request_containers.0 %]">
     <input type="submit" value="Request a [% unit.service_name == 'Garden Waste' ? 'replacement' : 'new' %] [% unit.service_name FILTER lower %] container" class="waste-service-descriptor waste-service-link">
   </form>
 [% ELSIF unit.garden_waste && NOT unit.garden_due %]
