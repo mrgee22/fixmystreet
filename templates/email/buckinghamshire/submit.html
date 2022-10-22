@@ -1,7 +1,7 @@
 [%
 
 email_summary = "A new problem in your area has been reported by a " _ site_name _ " user.";
-email_footer = "";
+email_footer = "If there is a more appropriate email address for messages about " _ category_footer _ ", please let us know. This will help improve the service for local people. We also welcome any other feedback you may have.";
 email_columns = 2;
 
 PROCESS '_email_settings.html';
@@ -42,10 +42,7 @@ of a local problem that they believe might require your attention.</p>
       </tr>
     [%~ END %]
   </table>
-  <p style="[% p_style %] margin-top: 0.5em;">
-    Replies to this email will go to FixMyStreet and updated according to the
-    SC code used in the Subject line.
-  </p>
+  <p style="[% p_style %] margin-top: 0.5em;">Replies to this message will go directly to [% report.name | html %], the user who reported the problem.</p>
   [% end_padded_box | safe %]
 </th>
 [% WRAPPER '_email_sidebar.html' object = report %]
@@ -53,13 +50,12 @@ of a local problem that they believe might require your attention.</p>
 [%- IF report.category == 'Claim' %]
     <p style="[% secondary_p_style %]">Confirm reference: [% report.external_id | html %]</p>
 [% END -%]
-    <p style="[% secondary_p_style %]">Report ID: [% report.id %]</p>
     <p style="[% secondary_p_style %]">[% report.category | html %]</p>
     [% report.detail | html_para_email(secondary_p_style) %]
   [% IF report.get_extra_fields %]
     <p style="[% secondary_p_style %]">
       [%~ FOR field IN report.get_extra_fields %][% IF field.value %]
-      [% field.description OR field.code %]: [% field.value %]
+      [% field.description %]: [% field.value %]
       [% IF NOT loop.last %]<br>[% END %]
       [%~ END %][% END %]
     </p>

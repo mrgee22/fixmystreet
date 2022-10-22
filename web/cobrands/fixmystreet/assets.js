@@ -38,7 +38,7 @@ OpenLayers.Layer.VectorBase = OpenLayers.Class(OpenLayers.Layer.Vector, {
           // Check both group and category because e.g. Isle of Wight has
           // layers attached with groups that should also apply to categories
           // with the same name
-          relevant = (OpenLayers.Util.indexOf(layer.asset_group, group) != -1 || OpenLayers.Util.indexOf(layer.asset_group, category) != -1);
+          relevant = (layer.asset_group === group || layer.asset_group === category);
       } else {
           relevant = (OpenLayers.Util.indexOf(layer.asset_category, category) != -1);
       }
@@ -244,18 +244,6 @@ OpenLayers.Layer.VectorAsset = OpenLayers.Class(OpenLayers.Layer.VectorBase, {
     CLASS_NAME: 'OpenLayers.Layer.VectorAsset'
 });
 
-// This is required so that the found/not found actions are fired on category
-// select and pin move rather than just on asset select/not select.
-OpenLayers.Layer.VectorAssetMove = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
-    initialize: function(name, options) {
-        OpenLayers.Layer.VectorAsset.prototype.initialize.apply(this, arguments);
-        $(fixmystreet).on('maps:update_pin', this.checkSelected.bind(this));
-        $(fixmystreet).on('report_new:category_change', this.checkSelected.bind(this));
-    },
-
-    CLASS_NAME: 'OpenLayers.Layer.VectorAssetMove'
-});
-
 // Handles layers such as USRN, TfL roads, and the like
 OpenLayers.Layer.VectorNearest = OpenLayers.Class(OpenLayers.Layer.VectorBase, {
     selected_feature: null,
@@ -273,7 +261,7 @@ OpenLayers.Layer.VectorNearest = OpenLayers.Class(OpenLayers.Layer.VectorBase, {
         this.getNearest(lonlat);
         this.updateUSRNField();
         if (this.fixmystreet.road) {
-            var valid_category = this.fixmystreet.all_categories || ((this.fixmystreet.asset_category || this.fixmystreet.asset_group) && this.relevant());
+            var valid_category = this.fixmystreet.all_categories || (this.fixmystreet.asset_category && this.relevant());
             if (!valid_category || !this.selected_feature) {
                 this.road_not_found();
             } else {
@@ -287,7 +275,7 @@ OpenLayers.Layer.VectorNearest = OpenLayers.Class(OpenLayers.Layer.VectorBase, {
         var feature = this.getFeatureAtPoint(point);
         if (feature == null) {
             // The click wasn't directly over a road, try and find one nearby
-            var nearest = this.getFeaturesWithinDistance(point, parseFloat(this.fixmystreet.nearest_radius) || 10);
+            var nearest = this.getFeaturesWithinDistance(point, this.fixmystreet.nearest_radius || 10);
             feature = nearest.length ? nearest[0] : null;
         }
         this.selected_feature = feature;
@@ -509,10 +497,13 @@ function get_asset_pick_message() {
  * can fire after a category change event, and that would then
  * update the new message using the text of the unselected layer. */
 function update_message_display(message) {
-    var list = this.fixmystreet.asset_group || this.fixmystreet.asset_category;
-    $.each(list, function(i, c) {
-        _update_message(message, c);
-    });
+    if (this.fixmystreet.asset_group) {
+        _update_message(message, this.fixmystreet.asset_group);
+    } else {
+        $.each(this.fixmystreet.asset_category, function(i, c) {
+            _update_message(message, c);
+        });
+    }
 }
 
 function _update_message(message, c) {
@@ -538,10 +529,7 @@ function layer_visibilitychanged() {
         }
         return;
     } else if (!this.getVisibility()) {
-        var ctl = this.get_select_control();
-        if (ctl) {
-            ctl.unselectAll();
-        }
+        this.get_select_control().unselectAll();
         this.asset_not_found(); // as trigger won't call on non-visible layers
     }
 
@@ -624,22 +612,6 @@ function get_fault_stylemap() {
 
 function construct_protocol_options(options) {
     var protocol_options;
-    if (options.http_wfs_url) {
-        var srsname = options.srsName.replace(':', '::');
-        options.http_options = {
-            url: options.http_wfs_url,
-            params: {
-                SERVICE: "WFS",
-                VERSION: "1.1.0",
-                REQUEST: "GetFeature",
-                SRSNAME: "urn:ogc:def:crs:" + srsname,
-                TYPENAME: options.wfs_feature
-            }
-        };
-        if (options.propertyNames) {
-            options.http_options.params.propertyName = options.propertyNames.join(',');
-        }
-    }
     if (options.http_options !== undefined) {
         protocol_options = options.http_options;
         OpenLayers.Util.applyDefaults(options, {
@@ -678,13 +650,11 @@ function construct_protocol_class(options) {
 }
 
 function construct_layer_options(options, protocol) {
-    var StrategyClass = options.strategy_class || OpenLayers.Strategy.FixMyStreet;
+    var StrategyClass = options.strategy_class || OpenLayers.Strategy.BBOX;
 
     var max_resolution = options.max_resolution;
     if (typeof max_resolution === 'object') {
-        max_resolution = parseFloat(max_resolution[fixmystreet.cobrand]);
-    } else {
-        max_resolution = parseFloat(max_resolution);
+        max_resolution = max_resolution[fixmystreet.cobrand];
     }
 
     var layer_options = {
@@ -944,174 +914,6 @@ fixmystreet.assets = {
         return selected_feature;
     },
 
-/*
-
-add() is used to add an asset layer to the map.
-It takes a large number of arguments, in two parameters that are merged
-together (more for use by the calling code if they e.g. share defaults for each
-layer). All arguments are added under the 'fixmystreet' attribute on the layer.
-
-Protocol/data
-=============
-geometryName - the name of the geometry layer in the data.
-
-WFS layers
-----------
-Shared options:
-    srsName - the SRS of the layer
-    propertyNames - a list of which attributes to fetch, if not the default
-    wfs_feature - which layer to use within the WFS server
-
-There are two ways of specifying the URL of the WFS layer. You can use wfs_url
-or you can use http_wfs_url - the former will make an XML POST request and so
-need an OPTIONS pre-flight request; the latter will make a GET request and does
-not. However, server-side filtering with filter_key/value can only be used with
-wfs_url.
-
-Other HTTP layers
------------------
-http_options - If present, OpenLayers.Protocol.HTTP will be used with the
-    properties provided. Most common will be url and params, occasionally
-    headers.
-format_class - defaults to GML.v3; GeoJSON is common.
-format_options - will be passed to the format class when constructed
-protocol_class - defaults to HTTP, might need to override to e.g. change the
-    name of the 'bbox' parameter
-
-Layer
-=====
-name - The name for the layer, defaulting to "WFS".
-strategy_class - defaults to OpenLayers.Strategy.FixMyStreet
-max_resolution - either a number, or a hash mapping cobrand to number. This
-    provides the maximum resolution at which an asset layer will be displayed
-    (and when first shown, the map may zoom in to this level). The hash is for
-    the case where a cobrand shows a different map with different resolutions.
-stylemap - defaults to the default OpenLayers.StyleMap of yellow dots that turn
-    green when hovered, and have a 'selected pin' if selected
-    You can use fixmystreet.assets.stylemap_invisible for a transparent layer.
-srsName - also used here to set the projection of the layer
-filter_key/filter_value - filter the data on a particular attribute and
-    value/values (filter_value can be a scalar, array, or function). If
-    non-HTTP WFS, this can be passed to the server for server-side filtering;
-    otherwise the filtering is done after fetching.
-attribution - rarely used, an attribution string to use on the map
-min_resolution - rarely used, default 0.00001 if max_resolution given
-
-Class
------
-By default, if usrn or road are specified (see below), the
-OpenLayers.Layer.VectorNearest class is used, otherwise
-OpenLayers.Layer.VectorAsset. This can be overridden using the class attribute.
-There is a VectorAssetMove class, which is the same as VectorAsset but fires
-checkSelected on category select and pin move as well.
-
-Behaviour
-=========
-non_interactive - boolean, if set, assets cannot be selected. They can still be
-    hovered if a hover style is present.
-
-Relevance
----------
-relevant - a function, which if present is called with the current category and
-    group and returns whether the layer is relevant or not
-asset_group - a string or array of strings containing groups relevant to the
-    layer
-asset_category - a string or array of strings containing categories relevant to
-    the layer
-body - if present, as well as the above, this string must match one of the
-    fixmystreet.bodies (the relevant body/bodies for the location/chosen
-    category). This is so .com only matches on relevant layers for the current
-    location.
-
-Visibility
-----------
-always_visible - boolean, the layer is always 'visible' (though its style could
-    still be invisible!) - as long as body matches. If false, check Relevance
-    to decide visibility.
-snap_threshold - defaults to 50. When a layer becomes visible (if not always
-    so), it tries to select the nearest asset to the marker, looking as far as
-    this threshold. Set to 0 to disable.
-
-On zoom or visibility change, we check about displaying a message. If the layer
-is Relevant, we show a message about picking an asset or zooming in. If the
-layer is non_interactive, display_zoom_message needs to be set for this message
-to be shown. On mobile, an extra map step is added to enable asset selection.
-
-NB: not found functions (see below) are called when a layer becomes invisible.
-
-asset_item - the name of the type of asset e.g. 'street light'. Used in a few
-    places
-asset_type - the type, used as a class prefixed by 'asset-' in the default 'You
-    can pick a...' message.
-asset_item_message - if present, used as the 'You can pick a...' message, with
-    ITEM replaced with asset_item
-
-VectorAsset
------------
-select_action - boolean, if set then asset selection will call
-    actions.asset_found with the selected asset, and asset deselection will
-    call actions.asset_not_found
-attributes - a hash of field to attribute. On asset selection, if attribute is
-    a function, it is called with the feature; otherwise it is looked up in the
-    feature's attributes. Then the input with the field name is set (and
-    inspector asset mobile display). On deselection, the attribute fields are
-    cleared.
-disable_pin_snapping - if true, none of the asset selection code runs
-    (including pin move), except the setting of attribute fields
-asset_id_field - set to the name of an attribute that is used to decide if two
-    assets are the same (upon map move or layer load, layer may refresh but
-    want to keep the same asset selected if possible)
-
-On category change, updates layer visibility, and if a feature is selected,
-sets the attribute fields.
-
-VectorAssetMove
----------------
-This also calls asset_found/asset_not_found on category change/pin move.
-
-VectorNearest
--------------
-On pin update or category change, the nearest feature is looked for.
-
-nearest_radius - how far to look for the nearest feature, default 10
-usrn - if present, as either an object of attribute/field keys or an array of
-    such objects, updates an input with the field key to the value of the
-    attribute with the attribute key (by default, or calls getUSRN with the
-    nearest feature if present)
-road - boolean; if present:
-    If there is a nearest feature, and either all_categories is set or it is a
-    Relevant category/group, call actions.found with the nearest feature (if
-    actions.found exists), otherwise call only_send with the body.
-    If not, call actions.not_found (if present), otherwise call
-    remove_only_send.
-all_categories - boolean to be set if the road found/not found functions should
-    fire on all categories
-
-Found / Not Found standard functions
-====================================
-
-Selected asset ID
------------------
-fixmystreet.assets.construct_named_select_style(LABEL) -
-    Used as the 'select' part of a stylemap to show an asset's ID above the pin
-    when selected. Provide a template of what you want displayed, e.g.
-    "${feature_id}".
-
-fixmystreet.assets.named_select_action_found(asset) /
-fixmystreet.assets.named_select_action_not_found() -
-    These can be provided to asset_found/asset_not_found in order to show a
-    message with the asset's ID in the sidebar when selected.
-
-The default message is "You have selected <asset_item> <ID>."
-
-construct_selected_asset_message - if present, called over the default message
-    constructor, to return the message to be shown instead.
-feature_code - the default message constructor looks up the value of this
-    attribute to use as the asset ID.
-construct_asset_name - if present, called with the above ID, to return ID and
-    string to be used as asset_item instead of the default.
-
-*/
     add: function(default_options, options) {
         if (!document.getElementById('map')) {
             return;
@@ -1132,13 +934,10 @@ construct_asset_name - if present, called with the above ID, to return ID and
     },
 
     add_layer: function(options) {
-        // Upgrade `asset_category` and `asset_group` to an array, in the case
-        // that this layer is only associated with a single category/group.
+        // Upgrade `asset_category` to an array, in the case that this layer is
+        // only associated with a single category.
         if (options.asset_category && !OpenLayers.Util.isArray(options.asset_category)) {
             options.asset_category = [ options.asset_category ];
-        }
-        if (options.asset_group && !OpenLayers.Util.isArray(options.asset_group)) {
-            options.asset_group = [ options.asset_group ];
         }
 
         var asset_layer = construct_asset_layer(options);
@@ -1153,8 +952,7 @@ construct_asset_name - if present, called with the above ID, to return ID and
 
         fixmystreet.assets.layers.push(asset_layer);
         if (options.always_visible) {
-            var visibility = fixmystreet.bodies && options.body ? fixmystreet.bodies.indexOf(options.body) != -1 : true;
-            asset_layer.setVisibility(visibility);
+            asset_layer.setVisibility(true);
         }
         return asset_layer;
     },
@@ -1368,44 +1166,9 @@ $(fixmystreet).on('body_overrides:change', function() {
 });
 
 /*
-
-Message controller
-------------------
-fixmystreet.message_controller is a group of functions to handle things
-such as categories where an asset must be selected or the pin must be on
-a road (responsibility message); it also handles categories/questions
-set to disable the form (stopper message).
-
-On category change, it checks to see if there is a stopper from a
-category/question, and if so, adds a message and disables the report
-form.
-
-For responsibility messages, any .js-update-coordinates link will have
-its parameters replaced with the current latitude/longitude; any
-.js-roads-asset can be replaced with the current layer asset_item/type.
-
-.asset_found / .asset_not_found - used with VectorAsset actions;
-  found will hide messages matching the layer's no_asset_msgs_class, or
-  the message matching the layer's no_asset_msg_id, or #js-not-an-asset
-  if neither are present. It will enable the report form (unless a
-  stopper message or a responsibility message is being shown).
-  not found will disable the report form, hide messages as above, and,
-  if no stopper message, then show the layer's no_asset_msg_id or
-  #js-not-an-asset.
-
-.road_found / .road_not_found - used with VectorNearest actions;
-  road_found(layer, feature, [criterion], [msg_id]): If an asset is
-  selected, hide messages/enable form as above. If no criterion function
-  is supplied, or it returns true, do the same. Otherwise, mark this
-  body as do not send, and if it's the only body (or Bucks special case)
-  disable the form and show the message given as msg_id.
-  road_not_found(layer, [criterion]): If an asset is selected, hide
-  messages/enable form as above. Otherwise, if it's the only body or the
-  criterion passes, disable form/show message as above.
-
-.add_ignored_body - called with a body name if staff can ignore stopper
-  messages for that body
-
+Handling of the form-top messaging: This handles categories that hide the form
+and show a message, and categories where assets must be selected or the pin
+must be on a road, taking into account National Highways roads.
 */
 
 fixmystreet.message_controller = (function() {
@@ -1423,18 +1186,13 @@ fixmystreet.message_controller = (function() {
             asset_strings.html(asset_strings.data('original'));
         }
         $('.js-update-coordinates').attr('href', function(i, href) {
-            var he_arg;
             if (href.indexOf('?') != -1) {
-                he_arg = href.indexOf('&he_referral=1');
                 href = href.substring(0, href.indexOf('?'));
             }
             href += '?' + OpenLayers.Util.getParameterString({
                 latitude: $('#fixmystreet\\.latitude').val(),
                 longitude: $('#fixmystreet\\.longitude').val()
             });
-            if (he_arg != -1) {
-                href += '&he_referral=1';
-            }
             return href;
         });
         if ($('html').hasClass('mobile')) {
@@ -1443,7 +1201,6 @@ fixmystreet.message_controller = (function() {
             $div.appendTo('#map_box');
         } else {
             $("#js-roads-responsibility").removeClass("hidden");
-            $("#js-roads-responsibility")[0].scrollIntoView();
         }
         $(id).removeClass("hidden");
     }
@@ -1601,13 +1358,7 @@ fixmystreet.message_controller = (function() {
                 responsibility_off(layer, 'road');
             } else {
                 fixmystreet.body_overrides.do_not_send(layer.fixmystreet.body);
-                var selected = fixmystreet.reporting.selectedCategory();
                 if (is_only_body(layer.fixmystreet.body)) {
-                    responsibility_on(layer, 'road', msg_id);
-                }
-                else if (layer.fixmystreet.body == 'Buckinghamshire Council' &&
-                    selected.group == 'Grass, hedges and weeds') {
-                    // Special case for Bucks' 'Grass' layer
                     responsibility_on(layer, 'road', msg_id);
                 }
             }
@@ -1616,14 +1367,14 @@ fixmystreet.message_controller = (function() {
         // If a feature wasn't found at the location they've clicked, it's
         // probably a field or something. Show an error to that effect,
         // unless an asset is selected.
-        road_not_found: function(layer, criterion) {
+        road_not_found: function(layer) {
             // don't show the message if clicking on a National Highways road
             if (fixmystreet.body_overrides.get_only_send() == 'National Highways' || !layer.visibility) {
                 responsibility_off(layer, 'road');
             } else if (fixmystreet.assets.selectedFeature()) {
                 fixmystreet.body_overrides.allow_send(layer.fixmystreet.body);
                 responsibility_off(layer, 'road');
-            } else if ( (criterion && criterion()) || is_only_body(layer.fixmystreet.body) ) {
+            } else if (is_only_body(layer.fixmystreet.body)) {
                 responsibility_on(layer, 'road');
             }
         },

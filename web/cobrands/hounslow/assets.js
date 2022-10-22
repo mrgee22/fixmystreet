@@ -5,9 +5,20 @@ if (!fixmystreet.maps) {
 }
 
 var defaults = {
-    http_wfs_url: "https://tilma.mysociety.org/mapserver/hounslow",
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/hounslow",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::27700"
+        }
+    },
     asset_type: 'spot',
-    max_resolution: 1.194328566789627,
+    max_resolution: {
+        'hounslow': 0.5291677250021167,
+        'fixmystreet': 1.194328566789627
+    },
     asset_id_field: 'CentralAssetId',
     attributes: {
         central_asset_id: 'CentralAssetId',
@@ -15,11 +26,16 @@ var defaults = {
     },
     geometryName: 'msGeometry',
     srsName: "EPSG:27700",
+    strategy_class: OpenLayers.Strategy.FixMyStreet,
     body: "Hounslow Borough Council"
 };
 
 fixmystreet.assets.add($.extend(true, {}, defaults, {
-    wfs_feature: "bins",
+    http_options: {
+        params: {
+            TYPENAME: "bins"
+        }
+    },
     asset_category: "Litter Bins",
     asset_item: 'bin'
 }));
@@ -27,7 +43,11 @@ fixmystreet.assets.add($.extend(true, {}, defaults, {
 // Disabled for now as the data is quite out of date and causing problems
 // sending reports.
 // fixmystreet.assets.add($.extend(true, {}, defaults, {
-//     wfs_feature: "trees",
+//     http_options: {
+//         params: {
+//             TYPENAME: "trees"
+//         }
+//     },
 //     asset_id_field: 'central_asset_id',
 //     attributes: {
 //         central_asset_id: 'central_asset_id',
@@ -58,7 +78,11 @@ fixmystreet.assets.add($.extend(true, {}, defaults, {
 // }));
 
 fixmystreet.assets.add($.extend(true, {}, defaults, {
-    wfs_feature: "signs",
+    http_options: {
+        params: {
+            TYPENAME: "signs"
+        }
+    },
     asset_category: [
         "Sign Obstructed: Vegetation",
         "Missing sign",
@@ -75,7 +99,11 @@ fixmystreet.assets.add($.extend(true, {}, defaults, {
 //  confident that the inventory is accurate."
 // https://3.basecamp.com/4020879/buckets/10951425/todos/1780668464
 // fixmystreet.assets.add($.extend(true, {}, defaults, {
-//     wfs_feature: "gulleys",
+//     http_options: {
+//         params: {
+//             TYPENAME: "gulleys"
+//         }
+//     },
 //     asset_category: [
 //         "Bad smell",
 //         "Flooding",
@@ -122,7 +150,11 @@ var labeled_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add($.extend(true, {}, labeled_defaults, {
-    wfs_feature: "lighting",
+    http_options: {
+        params: {
+            TYPENAME: "lighting"
+        }
+    },
     asset_category: [
         "Damage to paintwork",
         "Damage to paintwork/ column",
@@ -145,8 +177,15 @@ fixmystreet.assets.add($.extend(true, {}, labeled_defaults, {
 }));
 
 fixmystreet.assets.add($.extend(true, {}, defaults, {
-    wfs_feature: "streets",
-    max_resolution: 4.777314267158508,
+    http_options: {
+        params: {
+            TYPENAME: "streets"
+        }
+    },
+    max_resolution: {
+        'hounslow': 6.614596562526458,
+        'fixmystreet': 4.777314267158508
+    },
     always_visible: true,
     non_interactive: true,
     usrn: {

@@ -11,6 +11,13 @@ $(function(){
 });
 
 fixmystreet.maps.config = function() {
+    fixmystreet.controls = [
+        new OpenLayers.Control.ArgParserFMS(),
+        new OpenLayers.Control.Navigation(),
+        new OpenLayers.Control.PermalinkFMS('map'),
+        new OpenLayers.Control.PanZoomFMS({id: 'fms_pan_zoom' })
+    ];
+
     fixmystreet.map_type = OpenLayers.Layer.Google;
     fixmystreet.map_options = {
         zoomDuration: 10

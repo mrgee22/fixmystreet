@@ -12,6 +12,7 @@ var roadworks_defaults = {
     },
     srsName: "EPSG:27700",
     format_class: OpenLayers.Format.GeoJSON,
+    strategy_class: OpenLayers.Strategy.FixMyStreet,
     stylemap: fixmystreet.assets.stylemap_invisible,
     non_interactive: true,
     always_visible: true,

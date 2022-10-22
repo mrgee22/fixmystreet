@@ -1,7 +1,14 @@
 [%- FOR problem IN problems %]
     <tr[% ' class="adminhidden"' IF problem.state == 'hidden' %]>
         <td class="record-id">[%- IF problem.is_visible -%]
-        [%- uri = c.uri_for_email( '/report', problem.id ) %]
+        [%- cobrand_data = problem.cobrand_data;
+            cobrand_data = c.data_for_generic_problem IF !problem.cobrand;
+            IF cobrand_data;
+                uri = c.uri_for_email( '/report', problem.id, cobrand_data );
+            ELSE;
+                uri = c.uri_for_email( '/report', problem.id );
+            END;
+        %]
         <a href="[% uri %]" class="admin-offsite-link">[% problem.id %]</a>
         [%- ELSE %]
         [%- problem.id %]
@@ -23,22 +30,16 @@
             [%- END -%]
             <br>[% problem.cobrand %]<br>[% problem.cobrand_data | html %]
             <br>
-            [% assigned_user = problem.shortlisted_user.name OR problem.shortlisted_user.username %]
-            [%
-                IF c.user.has_body_permission_to('assign_report_to_user')
-                && assigned_user
-            %] [%# see report's assigned user %]
+            [% IF c.user.has_body_permission_to('assign_report_to_user') %] [%# see report's assigned user %]
                 <span>[% loc('Assigned to') %]: </span>
                 <span>
-                    [%- assigned_user -%]
+                    [%- problem.shortlisted_user.name OR problem.shortlisted_user.username OR loc('unassigned') -%]
                 </span>
             [%- END -%]
         </td>
         <td>[% prettify_state(problem.state, 1) %]<br><small>
             [% loc('Created') %]:&nbsp;[% PROCESS format_time time=problem.created %]
             <br>[% loc('When sent') %]:&nbsp;[% PROCESS format_time time=problem.whensent %]
-            [%- send_fail_bodies = problem.send_fail_bodies -%]
-            [%- IF send_fail_bodies.size %]<br>[% loc('Failed bodies:') %]&nbsp;[% send_fail_bodies.join(', ') %][% END -%]
             [%- IF problem.is_visible %]<br>[% loc('Confirmed:' ) %]&nbsp;[% PROCESS format_time time=problem.confirmed %][% END -%]
             [%- IF problem.is_fixed %]<br>[% prettify_state('fixed') %]: [% PROCESS format_time time=problem.lastupdate %][% END -%]
             [%- IF problem.is_closed %]<br>[% prettify_state('closed') %]: [% PROCESS format_time time=problem.lastupdate %][% END -%]

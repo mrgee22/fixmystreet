@@ -1,5 +1,4 @@
-[% disallowed = c.cobrand.updates_disallowed(problem) %]
-[% UNLESS disallowed %]
+[% UNLESS c.cobrand.updates_disallowed(problem) %]
 
   [% IF NOT c.user_exists AND problem.non_public # Came via other-reported token or similar %]
     <p>[% tprintf(loc('To provide an update, please <a href="%s">sign in</a>.'), '/auth?r=report/' _ problem.id) %]</p>
@@ -18,5 +17,5 @@
   [% END %]
 
 [% ELSE %]
-    [% INCLUDE 'report/_updates_disallowed_message.html' %]
+    [% TRY %][% INCLUDE 'report/_updates_disallowed_message.html' %][% CATCH file %][% END %]
 [% END %]

@@ -1,5 +1,10 @@
 fixmystreet.maps.config = function() {
-    fixmystreet.maps.controls.unshift( new OpenLayers.Control.AttributionFMS() );
+    fixmystreet.controls = [
+        new OpenLayers.Control.ArgParserFMS(),
+        new OpenLayers.Control.Navigation(),
+        new OpenLayers.Control.PermalinkFMS('map'),
+        new OpenLayers.Control.PanZoomFMS()
+    ];
     fixmystreet.map_type = OpenLayers.Layer.StreetView;
 };
 

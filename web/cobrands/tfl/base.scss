@@ -61,7 +61,7 @@ h3 {
     @include tflbutton;
 }
 
-.form-control {
+.form-control, .dropzone {
     @include tflfield;
 }
 
@@ -273,6 +273,19 @@ ol.big-numbers>li {
 
 #footer .about-tfl-menu,#footer .terms-and-conditions-menu {
     margin: 0
+}
+
+.pagination a {
+    border-radius: 22.5px;
+    color: #fff;
+    padding: 0.3em 1em;
+    font-size: 14px;
+    &:hover,
+    &:active,
+    &:focus,
+    &:visited {
+        color: #fff;
+    }
 }
 
 /* Safety critical reports */

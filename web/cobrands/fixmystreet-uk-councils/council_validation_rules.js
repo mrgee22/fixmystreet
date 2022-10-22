@@ -22,40 +22,10 @@ body_validation_rules = {
     },
     'Buckinghamshire Council': confirm_validation_rules,
     'Cheshire East Council': confirm_validation_rules,
-    'Hackney Council': {
-        detail: {
-          required: true,
-          maxlength: 256
-        }
-    },
     'Hounslow Borough Council': confirm_validation_rules,
     'Isle of Wight Council': confirm_validation_rules,
     'Island Roads': confirm_validation_rules,
     'Lincolnshire County Council': confirm_validation_rules,
-    'Merton Council': {
-        // additional category questions for:
-        // Abandoned Vehicles
-        vehicle_registration_number: {
-          maxlength: 15
-        },
-        vehicle_make_model: {
-          maxlength: 50
-        },
-        vehicle_colour: {
-          maxlength: 50
-        },
-        time_present: {
-          maxlength: 100
-        },
-        // Clinical Waste on Street
-        waste_type: {
-          maxlength: 100
-        },
-        // Fly-Tipping
-        evidence: {
-          maxlength: 100
-        },
-    },
     'Northamptonshire Highways': {
         title: {
           required: true,
@@ -92,12 +62,6 @@ body_validation_rules = {
         name: {
           required: true,
           maxlength: 40
-        }
-    },
-    'Shropshire Council': {
-        phone: {
-            validUkPhone: true,
-            maxlength: 20
         }
     }
 };

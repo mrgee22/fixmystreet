@@ -5,11 +5,20 @@ if (!fixmystreet.maps) {
 }
 
 var defaults = {
-    http_wfs_url: "https://tilma.mysociety.org/mapserver/bexley",
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/bexley",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     max_resolution: 4.777314267158508,
     geometryName: 'msGeometry',
     srsName: "EPSG:3857",
-    body: "London Borough of Bexley"
+    body: "London Borough of Bexley",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 var streetlight_stylemap = new OpenLayers.StyleMap({
@@ -40,7 +49,11 @@ var road_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(road_defaults, {
-    wfs_feature: "Streets",
+    http_options: {
+        params: {
+            TYPENAME: "Streets",
+        }
+    },
     nearest_radius: 100,
     usrn: [
         {
@@ -59,7 +72,12 @@ fixmystreet.assets.add(road_defaults, {
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Trees",
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/bexley",
+        params: {
+            TYPENAME: "Trees"
+        }
+    },
     asset_id_field: 'central_as',
     attributes: {
         central_asset_id: 'central_as',
@@ -71,21 +89,33 @@ fixmystreet.assets.add(defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Bollards",
+    http_options: {
+        params: {
+            TYPENAME: "Bollards"
+        }
+    },
     asset_category: ["Traffic bollard"],
     asset_item_message: 'Select the <b class="asset-spot"></b> on the map to pinpoint the exact location of a damaged traffic bollard.',
     asset_item: 'bollard'
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Lighting",
+    http_options: {
+        params: {
+            TYPENAME: "Lighting"
+        }
+    },
     asset_category: ["Lamp post", "Light in park or open space", "Underpass light", "Light in multi-storey car park", "Light in outside car park"],
     asset_item_message: 'Please pinpoint the exact location for the street lighting fault.',
     asset_item: 'street light'
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Toilets",
+    http_options: {
+        params: {
+            TYPENAME: "Toilets"
+        }
+    },
     asset_type: 'spot',
     asset_category: ["Public toilets"],
     asset_item: 'public toilet'

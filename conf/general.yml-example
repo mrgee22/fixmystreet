@@ -19,7 +19,6 @@ FMS_DB_PORT: '5432'
 FMS_DB_NAME: 'fms'
 FMS_DB_USER: 'fms'
 FMS_DB_PASS: ''
-FMS_DB_SSLMODE: 'prefer'
 
 # The base URL of the install.
 BASE_URL: 'http://www.example.org'
@@ -285,6 +284,3 @@ FETCH_COMMENTS_PROCESS_TIMEOUT: 0
 # If you use the daemon for sending reports, rather than the cron script,
 # this is how many children it will have.
 QUEUE_DAEMON_PROCESSES: 4
-
-O311_POLLING_INTERVAL: 2
-O311_POLLING_MAX_TRIES: 5

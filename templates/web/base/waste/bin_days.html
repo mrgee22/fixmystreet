@@ -1,10 +1,7 @@
 [% USE date(format = c.cobrand.bin_day_format) %]
 [% PROCESS 'waste/header.html' %]
 
-[% TRY %][% PROCESS waste/_service_navigation_bar.html %][% CATCH file %][% END %]
-[% IF c.cobrand.moniker != 'sutton' %]
 <h1 class="govuk-heading-xl">Your bin days</h1>
-[% END %]
 
 [% INCLUDE 'waste/_address_display.html' %]
 <div class="waste__collections">
@@ -15,19 +12,13 @@
 [% DEFAULT any_report_allowed = 0 ~%]
 [% SET any_request_allowed = 0 ~%]
 [% IF NOT waste_features.garden_disabled AND pending_subscription %]
-    <p>You have a pending
-        [%= IF pending_subscription.title == 'Garden Subscription - Renew' ~%]
-            garden subscription renewal.
-        [%~ ELSIF pending_subscription.title == 'Garden Subscription - New' ~%]
-            garden subscription.
-        [%~ END %]
-    </p>
+    <p>You have a pending [% pending_subscription.title %]</p>
 [% END %]
 [% FOR unit IN service_data %]
 [% UNLESS unit.request_only %]
   <h3 class="govuk-heading-m waste-service-name">[% unit.service_name %]</h3>
   <div class="govuk-grid-row">
-  [% SET image = c.cobrand.image_for_unit(unit) ~%]
+  [% SET image = c.cobrand.image_for_service(unit.service_id) ~%]
   [% IF image %]
     <div class="govuk-grid-column-one-quarter text-centered">
       <img src="[% image %].png" srcset="[% image %].png 1x, [% image %]@2x.png 2x" alt="" class="waste-service-image">
@@ -46,14 +37,14 @@
       </div>
       <div class="govuk-warning-text__content">
           <span class="govuk-warning-text__assistive">Warning</span>
-          <h3 class="govuk-heading-l govuk-warning-text__heading">Your subscription is soon due for renewal.</h3>
-        [% WRAPPER 'waste/_garden_status_messages.html' %]
+          <h3 class="govuk-heading-l govuk-warning-text__heading">Your subscription is soon due for renewal.</h3>    
           Avoid disruption to your service.
+          [% IF ( unit.garden_due || unit.garden_overdue ) && unit.garden_payment != 'direct_debit' %]
           <form method="post" action="[% c.uri_for_action('waste/garden_renew', [ property.id ]) %]">
             <input type="hidden" name="token" value="[% csrf_token %]">
             <input type="submit" value="Renew subscription today" class="govuk-button">
           </form>
-        [% END %]
+          [% END %]
       </div>
     </div>
 
@@ -75,7 +66,7 @@
             [% END %]
           </dd>
         </div>
-      [% IF unit.last AND unit.last.date.year > 2000 %][%# Bartec uses 1900-01-01T00:00:00 for jobs that have no previous collection %]
+      [% IF unit.last %]
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">Last collection</dt>
           <dd class="govuk-summary-list__value">
@@ -98,20 +89,44 @@
 [% END %]
 [% END %]
 [% IF NOT service_data.size %]
-    [% TRY %][% PROCESS waste/_bin_days_no_collections.html %][% CATCH file %]
     <p>This property has no collections.</p>
-    [% END %]
 [% END %]
 
         [% TRY %][% PROCESS waste/services_extra.html %][% CATCH file %][% END %]
 
     </div>
 
+    [% IF service_data.size %]
     <div class="govuk-grid-column-one-third">
       <div class="aside">
-        [% INCLUDE waste/bin_days_sidebar.html %]
+        <div class="aside-download">
+          <h3>Download your collection schedule</h3>
+          <ul>
+            <li><a href="[% c.uri_for_action('waste/calendar', [ property.id ]) %]">Add to your calendar (.ics file)</a></li>
+          </ul>
+        </div>
+       [% SET show_garden_subscribe = NOT waste_features.garden_disabled AND NOT pending_subscription AND NOT services_available.Garden_Waste.is_active %]
+       [% IF any_report_allowed OR any_request_allowed OR show_garden_subscribe %]
+        <div class="aside-services">
+          <h3>More services</h3>
+          <ul>
+            [% IF any_report_allowed %]
+              <li><a href="[% c.uri_for_action('waste/report', [ property.id ]) %]">Report a missed collection</a></li>
+            [% END %]
+            [% IF any_request_allowed %]
+              <li><a href="[% c.uri_for_action('waste/request', [ property.id ]) %]">Request a new container</a></li>
+            [% END %]
+            [% IF show_garden_subscribe %]
+              <li><a href="[% c.uri_for_action('waste/garden', [ property.id ]) %]">Subscribe to Green Garden Waste collection</a></li>
+            [% END %]
+            [% TRY %][% PROCESS waste/_more_services_extra.html %][% CATCH file %][% END %]
+          </ul>
+        </div>
+       [% END %]
+        [% TRY %][% PROCESS "waste/_bin_day_sidebar_extra.html" %][% CATCH file %][% END %]
       </div>
     </div>
+    [% END %]
   </div>
 </div>
 [% INCLUDE footer.html %]

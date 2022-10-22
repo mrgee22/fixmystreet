@@ -124,14 +124,14 @@ button,
 .btn,
 .green-btn {
     border: none;
-    color: white !important;
+    color: white;
     background: $greenwich_red;
 
     &:hover {
         border: none;
         text-decoration: underline;
-        color: white !important;
-        background: mix($greenwich_red, white, 85%);
+        color: white;
+        background: lighten($greenwich_red, 2%);
     }
 }
 

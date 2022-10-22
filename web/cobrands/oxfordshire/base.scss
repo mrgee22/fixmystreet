@@ -233,16 +233,11 @@ textarea {
 .extra-text {
   padding: 1em;
   margin: 0 -1em;
-  border-top: 1px solid $color-oxfordshire-pale-grey-green;
+  border-bottom: 1px solid $color-oxfordshire-pale-grey-green;
 
   p:last-child {
     margin-bottom: 0;
   }
-}
-
-.report-list-filters-wrapper {
-    border-top-color: $color-oxfordshire-pale-grey-green;
-    border-bottom-color: $color-oxfordshire-pale-grey-green;
 }
 
 .item-list--reports__item {
@@ -277,62 +272,6 @@ textarea {
     background-color: #007258;
 }
 
-//Embed video not using fancybox
-.embed-responsive {
-    position: relative;
-    display: block;
-    padding: 0;
-    overflow: hidden;
-    width: 100%;
-    height: 100%;
-
-    &::before {
-      display: block;
-      content: "";
-    }
-
-    .embed-responsive-item,
-    iframe,
-    embed,
-    object,
-    video {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-}
-
-.embed-responsive-16by9 {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 */
-    height: 0;
-    margin-bottom: 40px;
-}
-
-// Video section with thumbnail (on the report page)
-.video-thumbnail-section {
-    padding: 1em;
-    margin-bottom: 1em;
-    background-color: #E0E2E5;
-    a.iframe {
-        display: flex;
-        flex-direction: row;
-        align-items: end;
-        .video-thumbnail {
-            max-width: 50%;
-            flex-basis: 50%;
-        }
-        .video-cap-wrapper {
-            margin-left: 1em;
-            flex-basis: 50%;
-        }
-    }
-}
-
 @media print {
     body {
         background-color: #fff !important;
@@ -340,99 +279,6 @@ textarea {
 
     .mappage #side > .extra-text {
         display: none !important;
-    }
-}
-
-#key-tools {
-    @include list-reset-soft;
-    margin-bottom: 1em;
-    display: table;
-    width: 100%;
-
-    li {
-      display: table-cell;
-      vertical-align: bottom;
-      text-align: center;
-      border-#{$right}: 0.25em solid #fff;
-
-      &:last-child {
-        border-#{$right}: none;
-      }
-
-      &.hidden-js {
-        display: none;
-        visibility: hidden;
-      }
-    }
-
-    button {
-      width: 100%;
-      border: none;
-    }
-
-    a,
-    button {
-      display: block;
-      background-color: #f5f5f5;
-      background-repeat: no-repeat;
-      color: #333 !important;
-      padding: 1em;
-      font-size: 0.6875em;
-      font-family: $meta-font;
-      font-weight: normal;
-      line-height: 1.2em;
-      white-space: normal;
-      border-radius: 0;
-
-      &:hover,
-      &.hover,
-      &:focus {
-        text-decoration: none;
-        background-color: #333;
-        color: #fff !important;
-      }
-
-      &:after {
-        content: "";
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        margin-#{$left}: 0.5em;
-        vertical-align: -0.25em;
-        background-size: 112px 16px;
-        background-repeat: no-repeat;
-        @include svg-background-image("/cobrands/fixmystreet/images/report-tools");
-      }
-
-      &.abuse:after {
-        background-position: -96px 0;
-      }
-
-      &.feed:after {
-        background-position: -64px 0;
-      }
-
-      &.share:after {
-        background-position: -80px 0;
-      }
-
-      &.chevron:after {
-        background-position: flip(-16px 0, 0 0);
-      }
-    }
-
-    .sub-area-item {
-      display: none;
-    }
-
-    &.area-js {
-      .feed-list-wrapper, .area-report {
-        display: none;
-      }
-
-      .sub-area-item {
-        display: table-cell;
-      }
     }
 }
 

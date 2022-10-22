@@ -6,30 +6,69 @@ if (!fixmystreet.maps) {
 
 var domain = fixmystreet.staging ? "https://tilma.staging.mysociety.org" : "https://tilma.mysociety.org";
 var defaults = {
-    http_wfs_url: domain + "/mapserver/bromley_wfs",
+    http_options: {
+        url: domain + "/mapserver/bromley_wfs",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     asset_type: 'spot',
     max_resolution: 4.777314267158508,
     asset_id_field: 'CENTRAL_AS',
     geometryName: 'msGeometry',
     srsName: "EPSG:3857",
-    body: "Bromley Council"
+    body: "Bromley Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
+OpenLayers.Layer.VectorAssetBromley = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
+    relevant: function() {
+        var relevant = OpenLayers.Layer.VectorAsset.prototype.relevant.apply(this, arguments),
+            subcategories = this.fixmystreet.subcategories,
+            subcategory = $('#form_service_sub_code').val(),
+            relevant_sub = OpenLayers.Util.indexOf(subcategories, subcategory) > -1;
+        return relevant && relevant_sub;
+    },
+
+    CLASS_NAME: 'OpenLayers.Layer.VectorAssetBromley'
+});
+
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Streetlights",
+    class: OpenLayers.Layer.VectorAssetBromley,
+    http_options: {
+        params: {
+            TYPENAME: "Streetlights"
+        }
+    },
     asset_id_field: 'FEATURE_ID',
     attributes: {
         feature_id: 'FEATURE_ID'
     },
-    asset_category: ["Lamp Column Damaged", "Light Not Working", "Light On All Day", "Light blocked by vegetation"],
+    asset_category: ["Street Lighting and Road Signs"],
+    subcategories: [ 'SL_LAMP', 'SL_NOT_WORK', 'SL_ON_DAY', 'SL_BLOCK_VEG' ],
     asset_item: 'street light'
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Bins",
-    asset_category: ["Overflowing litter/dog bin", "Public Litter Bin"],
+    class: OpenLayers.Layer.VectorAssetBromley,
+    http_options: {
+        params: {
+            TYPENAME: "Bins"
+        }
+    },
+    asset_category: ["Parks and Greenspace", "Street Cleansing"],
+    subcategories: ['PG_OFLOW_DOG', 'SC_LIT_BIN'],
     asset_item: 'park bin',
     asset_item_message: 'For our parks, pick a <b class="asset-spot">bin</b> from the map &raquo;'
+});
+
+$(function(){
+    $("#problem_form").on("change.category", "#form_service_sub_code", function() {
+        $(fixmystreet).trigger('report_new:category_change');
+    });
 });
 
 var parks_stylemap = new OpenLayers.StyleMap({
@@ -41,18 +80,17 @@ var parks_stylemap = new OpenLayers.StyleMap({
     })
 });
 
-var parks_defaults = $.extend(true, {}, defaults, {
-    wfs_feature: 'Parks_Open_Spaces',
+fixmystreet.assets.add(defaults, {
+    http_options: {
+        params: {
+            TYPENAME: 'Parks_Open_Spaces'
+        }
+    },
     stylemap: parks_stylemap,
     asset_type: 'area',
+    asset_category: ["Parks and Greenspace"],
     asset_item: 'park',
     non_interactive: true
-});
-fixmystreet.assets.add(parks_defaults, {
-    asset_group: ["Parks and Greenspace"],
-});
-fixmystreet.assets.add(parks_defaults, {
-    asset_category: ["Park Security OOH"]
 });
 
 var prow_stylemap = new OpenLayers.StyleMap({
@@ -66,7 +104,11 @@ var prow_stylemap = new OpenLayers.StyleMap({
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "PROW",
+    http_options: {
+        params: {
+            TYPENAME: "PROW"
+        }
+    },
     stylemap: prow_stylemap,
     always_visible: true,
     non_interactive: true,
@@ -80,16 +122,6 @@ fixmystreet.assets.add(defaults, {
             $('#form_prow_reference').val('');
         }
     }
-});
-
-fixmystreet.assets.add(defaults, {
-    wfs_feature: "Drains",
-    asset_id_field: 'node_id',
-    attributes: {
-        feature_id: 'node_id'
-    },
-    asset_category: ["Blocked Drain"],
-    asset_item: 'drain'
 });
 
 })();

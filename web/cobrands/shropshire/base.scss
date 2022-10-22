@@ -7,16 +7,9 @@
 
 a,
 .fake-link {
-    text-decoration: underline;
-    color: $shropshire-royal-blue;
     &:hover,
     &:active {
         color: $shropshire-dark-grey;
-        // text-decoration: none;
-    }
-
-    #js-reports-list & {
-        text-decoration: none;
     }
 }
 
@@ -25,6 +18,10 @@ a:focus,
 #nav-link.focussed,
 .olButton:focus {
     outline: solid 3px $shropshire-yellow;
+}
+
+.pagination a {
+    color: #fff;
 }
 
 .olButton:focus {
@@ -36,43 +33,17 @@ a:focus,
 }
 
 #site-logo {
-    $logo-width: 140px;
-    $logo-height: 40px;
-    width:  $logo-width;
+    width: 150px;
     // height: 61px; // see below
-    background-size:  $logo-width  $logo-height;
-    @include svg-background-image("images/sc-logo-v3");
+    background-size: 150px 45px;
+    background-image: url("/cobrands/shropshire/images/sc-logo-v3.png");
 
     // text-indent doesn’t play nicely with focus outline,
     // so use padding overflow trick instead
     text-indent: 0;
     height: 0;
-    padding-top: calc(#{$logo-height} + 5px);
+    padding-top: 61px;
     overflow: hidden;
-}
-
-.nav-menu {
-    a, span {
-        letter-spacing: 0.08px;
-        font-size: 1em;
-        color: #fff !important;
-    }
-
-    a {
-        background-color: #424242;
-        border-bottom-color: $primary_b;
-
-        &:hover, &:focus {
-            background-color: $primary_b;
-        }
-    }
-
-    span {
-        background-color: $primary_b;
-        border-bottom-color: $primary_b;
-        color: #fff;
-        font-size: 1em;
-    }
 }
 
 .shropshire-footer {
@@ -95,80 +66,10 @@ a:focus,
         color: inherit;
         text-decoration: underline;
     }
-
-    small.copy {
-        text-align: center;
-        display: block;
-        margin-top: 24px;
-    }
-
-    .footer-links {
-        display: flex;
-        flex-direction: column;
-        width: 70%;
-
-        ul {
-            a {
-                font-size: 1em;
-                text-decoration: none;
-
-                &:hover, &:focus {
-                    text-decoration: underline;
-                }
-            }
-        }
-
-        .footer-link-wrapper {
-            margin-top: 25px;
-        }
-
-        p.footer-link {
-            .button {
-                background-repeat: no-repeat;
-                background-position: 0 center;
-                color: #ffffff;
-                padding-left: 1.5em;
-                background-color: transparent;
-                font-size: 1em;
-                text-decoration: none;
-    
-                &:hover, &:focus {
-                    text-decoration: underline;
-                }
-    
-                &.map {
-                    background-image: url('https://images.static.shropshire.gov.uk/external-template/img/map.png');
-                    width: auto;
-                }
-    
-                &.feedback {
-                    background-image: url('https://images.static.shropshire.gov.uk/external-template/img/feedback.png');
-                }
-    
-                &.govroam {
-                    display: block;
-                    background-image: url('https://images.static.shropshire.gov.uk/external-template/img/govroam-logo-white-140x80.png');
-                    min-width: 140px;
-                    min-height: 80px;
-                    background-size: contain;
-    
-                    &:hover {
-                        background-image: url('https://images.static.shropshire.gov.uk/external-template/img/govroam-logo-140x80.png'); 
-                    }
-                }
-            }
-        }
-    }
 }
 
 #report-cta {
     border-color: #fff;
-}
-
-.screen-reader-only.skip-the-map {
-    display: block !important;
-    position: static !important;
-    top: initial !important;
 }
 
 #front-main {
@@ -222,10 +123,9 @@ label {
 }
 
 .multi-select-button {
-    // Focus style, copied from shropshire-form-input() mixin
     &:focus {
         outline: none;
-        border: 1px solid #52A8EC;
+        border-color: #52A8EC;
         box-shadow: 0 1px 3px #000, 0 0 8px #52A8EC;
     }
 }
@@ -257,13 +157,8 @@ p.form-error {
 }
 
 #front_stats {
-    border-top-color: #bde1ce !important;
-    border-top-right-radius: 4px;
-    border-top-left-radius: 4px;
+    color: $shropshire-blue;
     background: transparent;
-    big {
-        color: $shropshire-green !important;
-    }
 }
 
 body.twothirdswidthpage .content .sticky-sidebar {
@@ -303,27 +198,7 @@ body.twothirdswidthpage .content .sticky-sidebar {
 }
 
 .box-warning {
-    background-color: mix($shropshire-yellow, #fff, 25%);
-}
-
-.fms-admin-info {
-    border-color: $shropshire-green;
-    background-color: mix($shropshire-green, #fff, 15%);
-}
-
-.segmented-control--radio input:checked+label {
-    background: $shropshire-dark-blue;
-    border-color: $shropshire-dark-blue;
-    color: #fff !important;
-}
-
-.item-list--wards__item a:hover,
-.item-list--reports__item a:hover,
-.item-list--wards__item a:focus,
-.item-list--reports__item a:focus,
-.hovered.item-list--wards__item a,
-.hovered.item-list--reports__item a {
-    background-color: mix($shropshire-blue, #fff, 25%);
+    background-color: mix($shropshire-yellow, #fff, 15%);
 }
 
 @import "../fixmystreet-uk-councils/societyworks-footer";

@@ -4,16 +4,21 @@ if (!fixmystreet.maps) {
     return;
 }
 
-var wfs_host = fixmystreet.staging ? 'tilma.staging.mysociety.org' : 'tilma.mysociety.org';
-var tilma_url = "https://" + wfs_host + "/mapserver/tfl";
-var streetmanager_url = "https://" + wfs_host + "/streetmanager.php";
-
 var defaults = {
-    http_wfs_url: tilma_url,
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/tfl",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     asset_type: 'spot',
     max_resolution: 2.388657133579254,
     geometryName: 'msGeometry',
-    srsName: "EPSG:3857"
+    srsName: "EPSG:3857",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 if (fixmystreet.cobrand === 'tfl') {
     // On .com we change the categories depending on where is clicked; on the
@@ -22,10 +27,22 @@ if (fixmystreet.cobrand === 'tfl') {
     defaults.body = 'TfL';
 }
 
+// This is required so that the found/not found actions are fired on category
+// select and pin move rather than just on asset select/not select.
+OpenLayers.Layer.TfLVectorAsset = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
+    initialize: function(name, options) {
+        OpenLayers.Layer.VectorAsset.prototype.initialize.apply(this, arguments);
+        $(fixmystreet).on('maps:update_pin', this.checkSelected.bind(this));
+        $(fixmystreet).on('report_new:category_change', this.checkSelected.bind(this));
+    },
+
+    CLASS_NAME: 'OpenLayers.Layer.TfLVectorAsset'
+});
+
 /* Point asset layers, bus stops and traffic lights. */
 
 var asset_defaults = $.extend(true, {}, defaults, {
-    class: OpenLayers.Layer.VectorAssetMove,
+    class: OpenLayers.Layer.TfLVectorAsset,
     body: 'TfL',
     select_action: true,
     actions: {
@@ -41,7 +58,11 @@ var asset_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    wfs_feature: "trafficsignals",
+    http_options: {
+        params: {
+            TYPENAME: "trafficsignals"
+        }
+    },
     asset_id_field: 'Site',
     attributes: {
         site: 'Site',
@@ -51,7 +72,11 @@ fixmystreet.assets.add(asset_defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    wfs_feature: "busstops",
+    http_options: {
+        params: {
+            TYPENAME: "busstops"
+        }
+    },
     asset_id_field: 'STOP_CODE',
     attributes: {
         stop_code: 'STOP_CODE',
@@ -62,7 +87,7 @@ fixmystreet.assets.add(asset_defaults, {
 });
 
 fixmystreet.assets.add(asset_defaults, {
-    wfs_feature: "busstations",
+    http_options: { params: { TYPENAME: "busstations" } },
     asset_id_field: 'Name',
     feature_code: 'Name',
     attributes: { station_name: 'Name' },
@@ -102,9 +127,8 @@ function to_ddmmyyyy(date) {
 }
 
 fixmystreet.assets.add(asset_defaults, {
-    http_wfs_url: '',
     http_options: {
-        url: streetmanager_url,
+        url: "https://tilma.mysociety.org/streetmanager.php",
         params: {
             points: 1,
             end_date: new Date().toISOString().slice(0, 10)
@@ -247,20 +271,13 @@ function is_tlrn_category_only(category, bodies) {
         bodies.length <= 1;
 }
 
-var a13dbfo_categories = tlrn_categories.concat([
-    "Flytipping (TfL)",
-    "Graffiti / Flyposting on traffic light (non-offensive)",
-    "Graffiti / Flyposting on traffic light (offensive)"
-]);
-
-function is_a13dbfo_category(category, bodies) {
-    return OpenLayers.Util.indexOf(a13dbfo_categories, category) > -1 &&
-        OpenLayers.Util.indexOf(bodies, 'TfL') > -1 &&
-        bodies.length <= 1;
-}
-
 var red_routes_layer = fixmystreet.assets.add(defaults, {
-    wfs_feature: "RedRoutes",
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/tfl",
+        params: {
+            TYPENAME: "RedRoutes"
+        }
+    },
     name: "Red Routes",
     max_resolution: 9.554628534317017,
     road: true,
@@ -298,38 +315,5 @@ if (red_routes_layer) {
         }
     });
 }
-
-fixmystreet.assets.add(defaults, {
-    wfs_feature: "A13TLRN_DBFO",
-    max_resolution: 9.554628534317017,
-    road: true,
-    non_interactive: true,
-    always_visible: true,
-    all_categories: true,
-    nearest_radius: 0.1,
-    stylemap: tlrn_stylemap,
-    no_asset_msg_id: '#js-tlrn-dbfo-road',
-    actions: {
-        found: function(layer) {
-            // Only care about this on TfL cobrand
-            if (fixmystreet.cobrand !== 'tfl') {
-                return;
-            }
-            // "Other (TfL)" has a stopper message set in the admin"
-            $('#js-category-stopper').remove();
-            var category = fixmystreet.reporting.selectedCategory().category;
-            if (is_a13dbfo_category(category, fixmystreet.bodies)) {
-                fixmystreet.message_controller.road_not_found(layer);
-                var body = new RegExp('&body=.*');
-                ($('#a13dbfolink').attr('href', $('#a13dbfolink').attr('href').replace(body, '&body=' +  encodeURIComponent(window.location.href))));
-            } else {
-                fixmystreet.message_controller.road_found(layer);
-            }
-        },
-        not_found: function(layer) {
-            fixmystreet.message_controller.road_found(layer);
-       }
-    }
-});
 
 })();

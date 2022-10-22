@@ -6,12 +6,21 @@ if (!fixmystreet.maps) {
 
 var domain = fixmystreet.staging ? "https://tilma.staging.mysociety.org" : "https://tilma.mysociety.org";
 var defaults = {
-    http_wfs_url: domain + "/mapserver/centralbeds",
+    http_options: {
+        url: domain + "/mapserver/centralbeds",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     asset_type: 'spot',
     max_resolution: 9.554628534317017,
     geometryName: 'msGeometry',
     srsName: "EPSG:3857",
-    body: "Central Bedfordshire Council"
+    body: "Central Bedfordshire Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 var proxy_defaults = $.extend(true, {}, defaults, {
     http_options: {
@@ -28,41 +37,12 @@ var centralbeds_types = [
     "Fw",
 ];
 
-function likely_trees_report() {
-    // Ensure the user can select anywhere on the map if they want to
-    // make a report in the "Trees" category. This means we don't show the
-    // "not found" message if no category/group has yet been selected
-    // or if only the group containing the "Trees" category has been
-    // selected.
-    var selected = fixmystreet.reporting.selectedCategory();
-    return selected.category === "Trees" ||
-            (selected.group === "Grass, Trees, Verges and Weeds" && !selected.category) ||
-            (!selected.group && !selected.category);
-}
-
-function show_non_stopper_message() {
-    // For reports about trees on private roads, Central Beds want the
-    // "not our road" message to be shown and also for the report to be
-    // able to be made.
-    // The existing stopper message code doesn't allow for this situation, so
-    // this function is used to show a custom DOM element that contains the
-    // message.
-    if ($('html').hasClass('mobile')) {
-        var msg = $("#js-custom-not-council-road").html();
-        $div = $('<div class="js-mobile-not-an-asset"></div>').html(msg);
-        $div.appendTo('#map_box');
-    } else {
-        $("#js-custom-roads-responsibility").removeClass("hidden");
-    }
-}
-
-function hide_non_stopper_message() {
-    $('.js-mobile-not-an-asset').remove();
-    $("#js-custom-roads-responsibility").addClass("hidden");
-}
-
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Highways",
+    http_options: {
+        params: {
+            TYPENAME: "Highways"
+        }
+    },
     stylemap: fixmystreet.assets.stylemap_invisible,
     non_interactive: true,
     always_visible: true,
@@ -75,25 +55,13 @@ fixmystreet.assets.add(defaults, {
     actions: {
         found: function(layer, feature) {
             fixmystreet.message_controller.road_found(layer, feature, function(feature) {
-                hide_non_stopper_message();
                 if (OpenLayers.Util.indexOf(centralbeds_types, feature.attributes.adoption) != -1) {
-                    return true;
-                }
-                if (likely_trees_report()) {
-                    show_non_stopper_message();
                     return true;
                 }
                 return false;
             }, "#js-not-council-road");
         },
-        not_found: function(layer) {
-            hide_non_stopper_message();
-            if (likely_trees_report()) {
-                fixmystreet.message_controller.road_found(layer);
-            } else {
-                fixmystreet.message_controller.road_not_found(layer);
-            }
-        }
+        not_found: fixmystreet.message_controller.road_not_found,
     },
     asset_item: "road",
     asset_type: 'road',
@@ -123,14 +91,22 @@ var labeled_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "StreetLighting",
+    http_options: {
+        params: {
+            TYPENAME: "StreetLighting"
+        }
+    },
     max_resolution: 2.388657133579254,
     asset_category: ["Street Lights"],
     asset_item: 'street light'
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Gullies",
+    http_options: {
+        params: {
+            TYPENAME: "Gullies"
+        }
+    },
     max_resolution: 1.194328566789627,
     asset_category: ["Surface cover", "Drains/Ditches Blocked"],
     asset_item: 'drain or manhole'

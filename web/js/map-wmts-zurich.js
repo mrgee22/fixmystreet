@@ -79,9 +79,19 @@ fixmystreet.maps.matrix_ids = [
  * to setup the way the map should operate.
  */
 fixmystreet.maps.config = function() {
-    fixmystreet.maps.controls = fixmystreet.maps.controls.slice(0, 3); // Cut out permalink and panzoom
+    // This stuff is copied from js/map-bing-ol.js
+
+    fixmystreet.controls = [
+        new OpenLayers.Control.ArgParserFMS(),
+        new OpenLayers.Control.Navigation()
+    ];
     if ( fixmystreet.page != 'report' || !$('html').hasClass('mobile') ) {
-        fixmystreet.maps.controls.push( new OpenLayers.Control.PanZoomFMS({id: 'fms_pan_zoom' }) );
+        fixmystreet.controls.push( new OpenLayers.Control.PanZoomFMS({id: 'fms_pan_zoom' }) );
+    }
+
+    /* Linking back to around from report page, keeping track of map moves */
+    if ( fixmystreet.page == 'report' ) {
+        fixmystreet.controls.push( new OpenLayers.Control.PermalinkFMS('key-tool-problems-nearby', '/around') );
     }
 
     this.setup_wmts_base_map();

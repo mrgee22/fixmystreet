@@ -66,7 +66,8 @@ var defaults = {
     body: "Westminster City Council",
     format_class: OpenLayers.Format.GeoJSON,
     format_options: {ignoreExtraDims: true},
-    protocol_class: OpenLayers.Protocol.Westminster
+    protocol_class: OpenLayers.Protocol.Westminster,
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 fixmystreet.assets.add(defaults, {

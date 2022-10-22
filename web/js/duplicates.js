@@ -75,11 +75,11 @@
             // the list item and another to activate the button- and b) the pins
             // might be scrolled off the top of the screen anyway e.g. on phones)
             var timeout;
-            $reports.on('mouseenter focusin', function(){
+            $reports.on('mouseenter', function(){
                 var id = parseInt( $(this).data('reportId'), 10 );
                 clearTimeout( timeout );
                 fixmystreet.maps.markers_highlight( id );
-            }).on('mouseleave focusout', function(){
+            }).on('mouseleave', function(){
                 timeout = setTimeout( fixmystreet.maps.markers_highlight, 50 );
             });
         }
@@ -122,7 +122,6 @@
                     $li.find('.item-list__item--expandable__actions').slideUp(250);
                     $li.removeClass('js-expandable');
                     $li.addClass('item-list__item--selected');
-                    $('.g-recaptcha').appendTo($div);
                 });
                 $li.find('.item-list__item--expandable__actions').append($button);
             });

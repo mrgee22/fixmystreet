@@ -1,20 +1,6 @@
-[%
-IF waste_features.bulky_enabled;
-  SET bodyclass = 'waste govuk bulky';
-ELSE;
-  SET bodyclass = 'waste govuk';
-END;
-%]
+[% SET bodyclass = 'waste' %]
 [% extra_js = [
-    version('/vendor/accessible-autocomplete.min.js'),
     version('/js/waste.js'),
     version('/cobrands/peterborough/waste.js')
 ] ~%]
 [% INCLUDE header.html %]
-
-[% emergency_message = c.cobrand.emergency_message('waste') %]
-[% IF emergency_message %]
-<div class="emergency-message">
-  [% emergency_message | html_para %]
-</div>
-[% END %]

@@ -7,33 +7,37 @@
 [% PROCESS title title=form.title %]
 [% PROCESS errors %]
 
-[% PROCESS 'waste/garden/subscribe_details_bin_desc.html' %]
+<div class="waste-service-hint-banner">
+  <div class="waste-service-hint-banner__image">
+      <img src="/cobrands/bromley/images/container-images/garden-waste-bin.png" alt="">
+  </div>
+  <div class="waste-service-hint__content">
+      <p>
+        Each wheelie bin holds the equivalent of 5 or 6 bags of green garden waste,
+        and will be collected fortnightly during gardening season (March–November)
+        and monthly outside of gardening season (December–February).
+      </p>
+  </div>
+</div>
 
 <form method="post" id="subscribe_details">
   <fieldset class="govuk-fieldset" style="margin-top: 1.5em;">
-    [% INCLUDE waste/garden/_bin_quantities.html form_page='subscribe' %]
+    [% INCLUDE waste/garden/_bin_quantities.html %]
     <hr class="fieldset-hr">
 
-    <div class="cost-pa__total js-bin-costs"
-        data-per_bin_cost="[% per_bin_cost %]"
-        data-per_new_bin_first_cost="[% per_new_bin_first_cost %]"
-        data-per_new_bin_cost="[% per_new_bin_cost %]"
-    >
+    <div class="cost-pa__total">
       <span class="cost-pa__total-costs">
-          Subscription cost: £<span id="cost_pa">[% tprintf( '%.2f', cost_pa ) %]</span>
+          Total per year: £<span id="cost_pa">[% tprintf( '%.2f', payment ) %]</span>
       </span>
-    [% IF per_new_bin_cost %]
       <span class="cost-pa__total-costs">
-          Admin fee: £<span id="cost_now_admin">[% tprintf( '%.2f', cost_now_admin ) %]</span>
-      </span>
-    [% END %]
-      <span class="cost-pa__total-costs">
-          Total to pay now: £<span id="cost_now">[% tprintf( '%.2f', cost_now ) %]</span>
+          Total to pay now: £<span id="cost_now">[% tprintf( '%.2f', payment ) %]</span>
       </span>
     </div>
   </fieldset>
 
-  [% PROCESS 'waste/garden/_payment_field.html' %]
+  [% IF NOT staff_payments_allowed %]
+  [% PROCESS form override_fields=['payment_method'] %]
+  [% END %]
 
   [% IF property %]
   <dl class="waste__address">
@@ -42,14 +46,19 @@
   </dl>
   [% END %]
 
-  [% IF staff_payments_allowed OR c.cobrand.waste_password_hidden %]
+  [% IF NOT staff_payments_allowed %]
+  [% PROCESS form override_fields=['billing_differ', 'billing_address'] %]
+  [% END %]
+
+  [% IF staff_payments_allowed %]
   [% PROCESS form override_fields=['name', 'email', 'phone', 'continue_review' ] %]
   [% ELSE %]
   [% PROCESS form override_fields=['name', 'email', 'phone', 'password', 'continue_review' ] %]
   [% END %]
 
-  [% PROCESS form override_fields=['saved_data', 'token', 'process', 'service_id', 'unique_id'] %]
+  [% PROCESS form override_fields=['saved_data', 'token', 'process', 'service_id'] %]
 
+  <input type="hidden" name="per_bin_cost" id="per_bin_cost" value="[% per_bin_cost %]">
 </form>
 
 [% INCLUDE footer.html %]

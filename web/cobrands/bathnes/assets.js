@@ -6,11 +6,12 @@ if (!fixmystreet.maps) {
 
 fixmystreet.maps.banes_defaults = {
     http_options: {
-        url: "https://data.bathnes.gov.uk/geoserver/fms/ows",
+        // Use tilma proxy for staging sites to avoid CORS issues.
+        url: fixmystreet.staging ? "https://tilma.mysociety.org/proxy/bathnes/isharemaps/" : "https://isharemaps.bathnes.gov.uk/getows.ashx",
         params: {
             mapsource: "BathNES/WFS",
             SERVICE: "WFS",
-            VERSION: "1.0.0",
+            VERSION: "1.1.0",
             REQUEST: "GetFeature",
             TYPENAME: "",
             SRSNAME: "urn:ogc:def:crs:EPSG::27700",
@@ -19,6 +20,7 @@ fixmystreet.maps.banes_defaults = {
     },
     format_class: OpenLayers.Format.GeoJSON,
     format_options: {ignoreExtraDims: true},
+    strategy_class: OpenLayers.Strategy.FixMyStreet,
     asset_category: "",
     asset_item: "asset",
     asset_type: 'spot',
@@ -34,7 +36,7 @@ fixmystreet.maps.banes_defaults = {
 fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
     http_options: {
         params: {
-            TYPENAME: "fms:GritBins"
+            TYPENAME: "Gritbins"
         }
     },
     asset_category: "Grit bin issue",
@@ -47,7 +49,7 @@ fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
 fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
     http_options: {
         params: {
-            TYPENAME: "fms:ParksOpenSpacesAssets"
+            TYPENAME: "ParksOpenSpacesAssets"
         }
     },
     asset_category: [
@@ -166,7 +168,7 @@ var lighting_stylemap = new OpenLayers.StyleMap({
 fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
     http_options: {
         params: {
-            TYPENAME: "fms:street_lighting"
+            TYPENAME: "StreetLighting"
         }
     },
     asset_category: "Street Light Fault",
@@ -189,7 +191,7 @@ fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
 fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
     http_options: {
         params: {
-            TYPENAME: "fms:adopted_highways"
+            TYPENAME: "AdoptedHighways"
         }
     },
     stylemap: fixmystreet.assets.stylemap_invisible,
@@ -236,21 +238,19 @@ fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
 // List of categories which are Curo Group's responsibility
 var curo_categories = [
     'Allotment issue',
+    'Obstructive vegetation',
+    'Play area safety issue',
+    'Trees and woodland',
     'Dead animals',
     'Dog fouling',
     'Excessive or dangerous littering',
-    'Litter bin damaged',
-    'Litter bin full',
-    'Needles',
-    'Obstructive vegetation',
-    'Play area safety issue',
-    'Trees and woodland'
+    'Needles'
 ];
 
 fixmystreet.assets.add(fixmystreet.maps.banes_defaults, {
     http_options: {
         params: {
-            TYPENAME: "fms:curo_land_registry"
+            TYPENAME: "Curo_Land_Registry"
         }
     },
     asset_type: 'area',

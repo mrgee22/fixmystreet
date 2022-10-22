@@ -1,0 +1,16 @@
+@import "_colours";
+@import "../sass/layout";
+
+
+body.frontpage {
+    .container {
+        max-width: $container-max-width;
+    }
+    #front-main {
+        #front-main-container {
+            padding: 0 1em;
+            max-width: $container-max-width;
+            background: white;
+       }
+    }
+}

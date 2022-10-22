@@ -165,21 +165,11 @@ $.extend(fixmystreet.utils, {
         // Should not be able to drag normal pins!!
         drag.deactivate();
 
-        fixmystreet.maps.show_keyboard_instructions('move');
-
         // Force a redraw to return (de)selected marker to normal size
         // Redraw for all pages, kick off a refresh too for around
         // TODO Put 'new report' pin in different layer to simplify this and elsewhere
         fixmystreet.maps.markers_resize();
         fixmystreet.markers.refresh({force: true});
-      },
-
-      hide_keyboard_instructions: function() {
-        $('html').removeClass(['map-keyboard-drop-pin', 'map-keyboard-move', 'map-keyboard-remove-pin']);
-      },
-      show_keyboard_instructions: function(cls) {
-        $('html').removeClass(['map-keyboard-drop-pin', 'map-keyboard-move', 'map-keyboard-remove-pin']);
-        $('html').addClass('map-keyboard-' + cls);
       },
 
       begin_report: function(lonlat) {
@@ -198,8 +188,6 @@ $.extend(fixmystreet.utils, {
             fixmystreet.markers.addFeatures( markers );
             drag.activate();
         }
-
-        fixmystreet.maps.hide_keyboard_instructions();
 
         // check to see if markers are visible. We click the
         // link so that it updates the text in case they go
@@ -495,14 +483,13 @@ $.extend(fixmystreet.utils, {
       toggle_base: function(e) {
           e.preventDefault();
           var $this = $(this);
-          var $label = $this.children('.map-link-label');
           var aerial = fixmystreet.maps.base_layer_aerial ? 0 : 1;
-          if ($label.text() == translation_strings.map_aerial) {
-              $label.text(translation_strings.map_roads);
+          if ($this.text() == translation_strings.map_aerial) {
+              $this.text(translation_strings.map_roads);
               $(this).toggleClass('roads aerial');
               fixmystreet.map.setBaseLayer(fixmystreet.map.layers[aerial]);
           } else {
-              $label.text(translation_strings.map_aerial);
+              $this.text(translation_strings.map_aerial);
               $(this).toggleClass('roads aerial');
               fixmystreet.map.setBaseLayer(fixmystreet.map.layers[1-aerial]);
           }
@@ -595,7 +582,7 @@ $.extend(fixmystreet.utils, {
             }
         } else {
             value = $el.val();
-            if (value.length) {
+            if (value) {
                 qs[key] = (typeof value === 'string') ? value : fixmystreet.utils.array_to_csv_line(value);
             } else {
                 delete qs[key];
@@ -843,7 +830,6 @@ $.extend(fixmystreet.utils, {
             });
         }
         fixmystreet.markers = new OpenLayers.Layer.Vector("Pins", pin_layer_options);
-        fixmystreet.markers.div.setAttribute('aria-hidden', 'true');
         fixmystreet.markers.events.register( 'loadstart', null, fixmystreet.maps.loading_spinner.show);
         fixmystreet.markers.events.register( 'loadend', null, fixmystreet.maps.loading_spinner.hide);
         OpenLayers.Request.XMLHttpRequest.onabort = function() {
@@ -930,16 +916,15 @@ $.extend(fixmystreet.utils, {
         }
 
         $('.map-pins-toggle').on('click', function(e) {
-            var $label = $(this).children('.map-link-label');
             e.preventDefault();
-            if ($label.html() == translation_strings.show_pins) {
+            if (this.innerHTML == translation_strings.show_pins) {
                 fixmystreet.markers.setVisibility(true);
                 fixmystreet.select_feature.activate();
-                $label.html(translation_strings.hide_pins);
-            } else if ($label.html() == translation_strings.hide_pins) {
+                $('.map-pins-toggle').html(translation_strings.hide_pins);
+            } else if (this.innerHTML == translation_strings.hide_pins) {
                 fixmystreet.markers.setVisibility(false);
                 fixmystreet.select_feature.deactivate();
-                $label.html(translation_strings.show_pins);
+                $('.map-pins-toggle').html(translation_strings.show_pins);
             }
             if (typeof ga !== 'undefined') {
                 ga('send', 'event', 'toggle-pins-on-map', 'click');
@@ -961,7 +946,7 @@ $.extend(fixmystreet.utils, {
         fixmystreet.map = new OpenLayers.Map(
             "map", OpenLayers.Util.extend({
                 theme: null,
-                controls: fixmystreet.maps.controls,
+                controls: fixmystreet.controls,
                 displayProjection: new OpenLayers.Projection("EPSG:4326")
             }, fixmystreet.map_options)
         );
@@ -985,14 +970,25 @@ $.extend(fixmystreet.utils, {
                 numZoomLevels: fixmystreet.numZoomLevels
             }, fixmystreet.layer_options[i]);
             var layer_options = fixmystreet.layer_options[i];
-            if (layer_options.matrixIds) {
+            if (layer_options.wms_version) {
+                var options = {
+                  layers: layer_options.layer_names[0],
+                  size: layer_options.tile_size,
+                  format: layer_options.format
+                };
+                layer = new fixmystreet.map_type(
+                  layer_options.name,
+                  layer_options.url,
+                  options,
+                  layer_options
+                );
+            } else if (layer_options.matrixIds) {
                 layer = new fixmystreet.map_type(layer_options);
             } else if (fixmystreet.layer_options[i].map_type) {
                 layer = new fixmystreet.layer_options[i].map_type(fixmystreet.layer_name, layer_options);
             } else {
                 layer = new fixmystreet.map_type(fixmystreet.layer_name, layer_options);
             }
-            layer.div.setAttribute('aria-hidden', 'true');
             fixmystreet.map.addLayer(layer);
         }
 
@@ -1011,7 +1007,6 @@ $.extend(fixmystreet.utils, {
             fixmystreet.map.addControl(click);
             click.activate();
         }
-        fixmystreet.maps.show_keyboard_instructions('move');
 
         onload();
 
@@ -1025,12 +1020,12 @@ $.extend(fixmystreet.utils, {
             // On touchscreens go straight to the report (see #2294).
             (function() {
                 var timeout;
-                $('#js-reports-list').on('mouseenter focusin', '.item-list--reports__item', function(){
+                $('#js-reports-list').on('mouseenter', '.item-list--reports__item', function(){
                     var href = $('a', this).attr('href');
                     var id = parseInt(href.replace(/^.*[\/]([0-9]+)$/, '$1'),10);
                     clearTimeout(timeout);
                     fixmystreet.maps.markers_highlight(id);
-                }).on('mouseleave focusout', '.item-list--reports__item', function(){
+                }).on('mouseleave', '.item-list--reports__item', function(){
                     timeout = setTimeout(fixmystreet.maps.markers_highlight, 50);
                 });
             })();
@@ -1040,13 +1035,6 @@ $.extend(fixmystreet.utils, {
 // End maps closure
 })();
 
-OpenLayers.Control.AttributionFMS = OpenLayers.Class(OpenLayers.Control.Attribution, {
-    draw: function(){
-        OpenLayers.Control.Attribution.prototype.draw.apply(this, arguments);
-        this.div.setAttribute('aria-hidden', 'true');
-        return this.div;
-    }
-});
 
 /* Overridding the buttonDown function of PanZoom so that it does
    zoomTo(0) rather than zoomToMaxExtent()
@@ -1065,10 +1053,6 @@ OpenLayers.Control.PanZoomFMS = OpenLayers.Class(OpenLayers.Control.PanZoom, {
         return btn;
     },
     moveTo: function(){},
-    onButtonClick: function(evt) {
-        OpenLayers.Control.PanZoom.prototype.onButtonClick.apply(this, arguments);
-        fixmystreet.maps.hide_keyboard_instructions();
-    },
     draw: function(px) {
         // A customised version of .draw() that doesn't specify
         // and dimensions/positions for the buttons, since we
@@ -1228,9 +1212,7 @@ OpenLayers.Strategy.FixMyStreet = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
             mapBounds = this.getMapBounds();
         }
         this.bounds = mapBounds;
-    },
-
-    CLASS_NAME: "OpenLayers.Strategy.FixMyStreet"
+    }
 });
 
 /* This strategy additionally does not update on load, as we already have the data. */
@@ -1428,121 +1410,3 @@ OpenLayers.Request.XMLHttpRequest.prototype.setRequestHeader = function(sName, s
     this._headers[sName] = sValue;
     return this._object.setRequestHeader(sName, sValue);
 };
-
-/* This is similar to OpenLayers' own KeyboardDefaults, but switches to using
- * key rather than keyCode (OL zoom out does not work in Firefox), works better
- * with modifier keys, and adds FMS specific handling for showing help and
- * starting a new report.
- */
-OpenLayers.Control.KeyboardDefaultsFMS = OpenLayers.Class(OpenLayers.Control, {
-    autoActivate: true,
-    slideFactor: 50,
-    observeElement: null,
-    draw: function() {
-        var observeElement = this.observeElement || document;
-        this.handler = new OpenLayers.Handler.Keyboard( this,
-                {"keydown": this.defaultKeyPress},
-                {observeElement: observeElement}
-        );
-    },
-    defaultKeyPress: function (evt) {
-        var size, handled = true;
-
-        var target = OpenLayers.Event.element(evt);
-        if (target  &&
-            (target.tagName == 'INPUT' ||
-             target.tagName == 'TEXTAREA' ||
-             target.tagName == 'SELECT')) {
-            return;
-        }
-        if (evt.altKey || evt.metaKey) {
-            return;
-        }
-        var slide = evt.ctrlKey ? this.slideFactor / 5 : this.slideFactor;
-
-        switch (evt.key) {
-            case "Spacebar":
-            case " ":
-                if ($('html').hasClass('map-keyboard-drop-pin')) {
-                    fixmystreet.display.begin_report( fixmystreet.map.getCenter() );
-                    fixmystreet.maps.show_keyboard_instructions('remove-pin');
-                } else if (fixmystreet.page === 'new') {
-                    fixmystreet.maps.show_keyboard_instructions('drop-pin');
-                }
-                break;
-            case "ArrowLeft":
-            case "Left":
-                this.map.pan(-slide, 0);
-                break;
-            case "ArrowRight":
-            case "Right":
-                this.map.pan(slide, 0);
-                break;
-            case "ArrowUp":
-            case "Up":
-                this.map.pan(0, -slide);
-                break;
-            case "ArrowDown":
-            case "Down":
-                this.map.pan(0, slide);
-                break;
-
-            case "PageUp":
-                size = this.map.getSize();
-                this.map.pan(0, -0.75*size.h);
-                break;
-            case "PageDown":
-                size = this.map.getSize();
-                this.map.pan(0, 0.75*size.h);
-                break;
-            case "End":
-                size = this.map.getSize();
-                this.map.pan(0.75*size.w, 0);
-                break;
-            case "Home":
-                size = this.map.getSize();
-                this.map.pan(-0.75*size.w, 0);
-                break;
-
-            case "+":
-            case "Add":
-            case "=":
-                this.map.zoomIn();
-                break;
-            case "-":
-            case "Subtract":
-                this.map.zoomOut();
-                break;
-            default:
-                handled = false;
-        }
-        if (handled) {
-            // prevent browser default not to move the page
-            // when moving the page with the keyboard
-            OpenLayers.Event.stop(evt);
-            if ($('html').hasClass('map-keyboard-move')) {
-                if (fixmystreet.page === 'around') {
-                    fixmystreet.maps.show_keyboard_instructions('drop-pin');
-                } else if (fixmystreet.page === 'new') {
-                    fixmystreet.maps.show_keyboard_instructions('remove-pin');
-                } else {
-                    fixmystreet.maps.hide_keyboard_instructions();
-                }
-            }
-        }
-    },
-
-    CLASS_NAME: "OpenLayers.Control.KeyboardDefaultsFMS"
-});
-
-fixmystreet.maps.controls = [
-    new OpenLayers.Control.ArgParserFMS(),
-    new OpenLayers.Control.KeyboardDefaultsFMS(),
-    new OpenLayers.Control.Navigation(),
-    new OpenLayers.Control.PermalinkFMS('map'),
-    new OpenLayers.Control.PanZoomFMS({id: 'fms_pan_zoom' })
-];
-/* Linking back to around from report page, keeping track of map moves */
-if ( fixmystreet.page == 'report' && document.getElementById('key-tool-problems-nearby')) {
-    fixmystreet.maps.controls.push( new OpenLayers.Control.PermalinkFMS('key-tool-problems-nearby', '/around') );
-}

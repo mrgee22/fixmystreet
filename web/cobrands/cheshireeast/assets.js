@@ -16,7 +16,8 @@ var defaults = {
     },
     geometryName: 'msGeometry',
     srsName: "EPSG:27700",
-    body: "Cheshire East Council"
+    body: "Cheshire East Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 var streetlight_stylemap = new OpenLayers.StyleMap({
@@ -45,8 +46,24 @@ fixmystreet.assets.add(labeled_defaults, {
     asset_item: 'street light'
 });
 
+var cleaning_cats = [
+  'Dead Animals',
+  'Dog Fouling',
+  'Fly Posting',
+  'Fly Tipping',
+  'Graffiti',
+  'Litter and Bins',
+  'Needles, Syringes or Glass',
+  'Play Area Safety Issue',
+  'Street Sweeping',
+  'Abandoned Vehicle',
+  'Abandoned Vehicles - Not Taxed',
+  'Abandoned Vehicles - Taxed'
+];
+
 fixmystreet.assets.add(defaults, {
     stylemap: fixmystreet.assets.stylemap_invisible,
+    always_visible: true,
     non_interactive: true,
     wfs_feature: 'AdoptedRoads',
     usrn: {
@@ -57,20 +74,18 @@ fixmystreet.assets.add(defaults, {
     no_asset_msg_id: '#js-not-a-road',
     asset_item: 'road',
     asset_type: 'road',
-    asset_group: [
-        'Crossings',
-        'Drainage',
-        'Fencing or Walls',
-        'Hedge, Trees and Verges',
-        'Pavement (Footway)',
-        'Road (Carriageway)',
-        'Signs',
-        'Street lights',
-        'Winter'
-    ],
+    all_categories: true,
     actions: {
         found: fixmystreet.message_controller.road_found,
-        not_found: fixmystreet.message_controller.road_not_found
+        not_found: function(layer) {
+            var selected = fixmystreet.reporting.selectedCategory();
+            var cat = selected.category !== '' ? selected.category : selected.group;
+            if (OpenLayers.Util.indexOf(cleaning_cats, cat) != -1) {
+              fixmystreet.message_controller.road_found(layer);
+            } else {
+              fixmystreet.message_controller.road_not_found(layer);
+            }
+        }
     }
 });
 

@@ -15,7 +15,7 @@
       [% INCLUDE 'around/_postcode_submit_button.html' attr='class="green-btn"' %]
     </div>
   </fieldset>
-  [% INCLUDE 'around/_postcode_form_geolocation.html' url='/alert/list' %]
+  <a href="/alert/list" id="geolocate_link">&hellip; [% loc('or use my location') %]</a>
 </form>
 
 [% IF photos.size %]

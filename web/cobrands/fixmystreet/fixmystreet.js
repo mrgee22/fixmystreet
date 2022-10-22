@@ -78,6 +78,7 @@ function isR2L() {
                         $ajax_result.html('<p style="text-align:center">Loading</p>');
                         $ajax_result.load(href);
                     }
+
                     // Style up the $drawer
                     drawer_top = $(window).height() - $sw.height();
                     var drawer_css = {
@@ -98,8 +99,6 @@ function isR2L() {
 
                 // Insert the .shadow-wrap controls into the top of the drawer.
                 $sw.addClass('static').prependTo($drawer);
-                $('#key-tools').addClass('area-js');
-                $('#key-tool-wards').addClass('hover');
 
                 // Animate the drawer into place, enitrely covering the sidebar.
                 var sidebar_top_px = $sidebar.position().top;
@@ -138,14 +137,8 @@ function isR2L() {
             settings.presets = [];
             settings.presets.push({
                 name: settings.allText,
+                all: true
             });
-
-            if ($select.data('all-options')) {
-                settings.presets[0].options = $select.data('all-options');
-            }
-            else {
-                settings.presets[0].all = true;
-            }
         }
 
         if ( $select.data('extra') && $select.data('extra-options') ) {
@@ -524,8 +517,8 @@ $.extend(fixmystreet.set_up, {
         accessibleAutocomplete.enhanceSelectElement({
             selectElement: this,
             displayMenu: 'overlay',
-            required: $(this).prop('required') ? true : false,
-            showAllValues: true,
+            required: true,
+            // showAllValues: true, // Currently undismissable on iOS
             defaultValue: ''
         });
     });
@@ -863,25 +856,12 @@ $.extend(fixmystreet.set_up, {
     // to refresh the map when the filter inputs are changed.
     $(".report-list-filters [type=submit]").hide();
 
-    // There are also other uses of this besides report list filters activated here
     $('.js-multiple').make_multi();
-
-    function update_label(id, str) {
-        $(id).prev('label').replaceWith(function(){ return $('<span>' + this.innerHTML + '</span>'); });
-        $(id).next('.multi-select-container').children('.multi-select-button').attr('aria-label', str);
-    }
-    update_label('#statuses', translation_strings.select_status_aria_label);
-    update_label('#filter_categories', translation_strings.select_category_aria_label);
   },
 
-  label_accessibility_update: function() {
-    // Replace unnecessary labels with a span and include a
-    // proper aria-label to improve accessibility.
-    function replace_label(id, sibling_class, sibling_child, str) {
-        $(id).siblings(sibling_class).children(sibling_child).attr('aria-label', str);
-        $(id).replaceWith(function(){ return $('<span>' + this.innerHTML + '</span>'); });
-    }
-    replace_label('#photo-upload-label','.dropzone.dz-clickable', '.dz-default.dz-message', translation_strings.upload_aria_label);
+  mobile_ui_tweaks: function() {
+    //move 'skip this step' link on mobile
+    $('.mobile #skip-this-step').addClass('chevron').wrap('<li>').parent().appendTo('#key-tools');
   },
 
   // Very similar function in front.js for front page
@@ -1492,13 +1472,10 @@ function re_select(group, category) {
 
 // On the new report form, does this by asking for details from the server.
 fixmystreet.fetch_reporting_data = function() {
-    var he_arg = window.location.href.indexOf('&he_referral=1');
-    he_arg = he_arg === -1 ? 0 : 1;
     $.getJSON('/report/new/ajax', {
         w: 1,
         latitude: $('#fixmystreet\\.latitude').val(),
-        longitude: $('#fixmystreet\\.longitude').val(),
-        he_referral: he_arg
+        longitude: $('#fixmystreet\\.longitude').val()
     }, function(data) {
         if (data.error) {
             if (!$('#side-form-error').length) {
@@ -1509,7 +1486,6 @@ fixmystreet.fetch_reporting_data = function() {
             $('body').removeClass('with-notes');
             return;
         }
-        $('#side-form-error').hide();
         $('#side-form').show();
         var selected = fixmystreet.reporting.selectedCategory(),
             old_category_group = selected.group || $('#filter_group').val() || '',
@@ -1551,14 +1527,8 @@ fixmystreet.fetch_reporting_data = function() {
 
         $('#form_category_row').html(data.category);
         $('#form_subcategory_row').html(data.subcategories);
-        if (data.preselected && (data.preselected.category || data.preselected.subcategory)) {
-            re_select(data.preselected.category, data.preselected.subcategory);
-        } else {
-            re_select(old_category_group, old_category);
-        }
+        re_select(old_category_group, old_category);
         fixmystreet.reporting.topLevelPoke();
-
-        fixmystreet.set_up.fancybox_images(); // In case e.g. top_message has pulled in a fancybox
 
         if ( data.extra_name_info && !$('#form_fms_extra_title').length ) {
             // there might be a first name field on some cobrands
@@ -1682,7 +1652,6 @@ fixmystreet.display = {
     }
 
     fixmystreet.page = 'new';
-    document.title = translation_strings.reporting_a_problem;
 
     fixmystreet.update_report_a_problem_btn();
   },
@@ -1838,7 +1807,6 @@ fixmystreet.display = {
         $('body').removeClass('with-notes');
 
         fixmystreet.page = fixmystreet.original.page;
-        document.title = translation_strings.viewing_a_location;
         if ($('html').hasClass('mobile') && fixmystreet.page == 'around') {
             $('#mob_sub_map_links').remove();
             $('html').removeClass('map-page');

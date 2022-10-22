@@ -15,7 +15,6 @@ $link-hover-text-decoration: underline !default;
 $primary_link_decoration: underline !default;
 $primary_link_hover_decoration: $primary_link_decoration !default;
 
-$pagination_background: #f6f6f6 !default;
 $itemlist_item_background: #f6f6f6 !default;
 $itemlist_item_background_hover: #e6e6e6 !default;
 $col_big_numbers: #666 !default;
@@ -222,22 +221,6 @@ a,
   font-size: 1em;
   padding: 0;
   margin: 0;
-}
-
-// Visible for screen readers only
-.screen-reader-only {
-  html.js & {
-    // If javascript is enabled, hide the skip link off-screen,
-    // but keep it visible for screen readers.
-    position: absolute;
-    top: -999px;
-
-    &:focus,
-    &:focus-within {
-      // And show it again if it receives focus (eg: via tab key)
-      position: static;
-    }
-  }
 }
 
 // custom type
@@ -465,12 +448,12 @@ select.form-control {
 }
 
 /* On a reporting page MyW/anon */
-small.or {
+small#or {
   margin: 1em auto;
   width: 100%;
 }
-small.or:before,
-small.or:after {
+small#or:before,
+small#or:after {
   background-color: #fff;
   content: "";
   display: inline-block;
@@ -479,11 +462,11 @@ small.or:after {
   vertical-align: middle;
   width: 50%;
 }
-small.or:before {
+small#or:before {
   right: 1em;
   margin-left: -50%;
 }
-small.or:after {
+small#or:after {
   left: 1em;
   margin-right: -50%;
 }
@@ -862,11 +845,6 @@ html.mobile.js-nav-open #js-menu-open-modal {
     &:last-child {
       border-#{$right}: none;
     }
-
-    &.hidden-js {
-      display: none;
-      visibility: hidden;
-    }
   }
 
   button {
@@ -922,20 +900,6 @@ html.mobile.js-nav-open #js-menu-open-modal {
 
     &.chevron:after {
       background-position: flip(-16px 0, 0 0);
-    }
-  }
-
-  .sub-area-item {
-    display: none;
-  }
-
-  &.area-js {
-    .feed-list-wrapper, .area-report {
-      display: none;
-    }
-
-    .sub-area-item {
-      display: table-cell;
     }
   }
 }
@@ -1666,10 +1630,6 @@ input.final-submit {
     left: 0px;
 }
 
-.fancybox-bg {
-  pointer-events: none;
-}
-
 .problem-back {
   display: block;
   font-size: 1em;
@@ -1832,20 +1792,15 @@ html.js #map .noscript {
   display: none;
 }
 
-#ns_fms_pan_zoom,
 #fms_pan_zoom {
-  top: 10px;
-  #{$right}: 10px;
+  top: 0.5em;
+  #{$right}: 0.5em;
 
   .map-reporting & {
-    top: 40px; // make space for the semi-transparent "Place pin on map" bar
+    top: 2.75em; // make space for the semi-transparent "Place pin on map" bar
   }
 }
 
-#ns_fms_pan_zoom_panup,
-#ns_fms_pan_zoom_pandown,
-#ns_fms_pan_zoom_panleft,
-#ns_fms_pan_zoom_panright,
 #fms_pan_zoom_panup,
 #fms_pan_zoom_pandown,
 #fms_pan_zoom_panleft,
@@ -1853,12 +1808,6 @@ html.js #map .noscript {
   display: none;
 }
 
-#ns_fms_pan_zoom_panup,
-#ns_fms_pan_zoom_pandown,
-#ns_fms_pan_zoom_panleft,
-#ns_fms_pan_zoom_panright,
-#ns_fms_pan_zoom_zoomin,
-#ns_fms_pan_zoom_zoomout,
 #fms_pan_zoom_panup,
 #fms_pan_zoom_pandown,
 #fms_pan_zoom_panleft,
@@ -1870,103 +1819,55 @@ html.js #map .noscript {
   width: 36px;
   height: 0;
   padding-top: 36px;
+  overflow: hidden;
+  @include svg-background-image("/cobrands/fixmystreet/images/fms-pan-zoom");
+  background-size: 156px 72px;
   background-repeat: no-repeat;
   filter: none !important; // Override OpenLayers PNG handling of the navigation
-  background-color: #222222;
-  color: transparent !important;
 }
 
-#ns_fms_pan_zoom_panup,
 #fms_pan_zoom_panup {
-  background-image: inline-image("../fixmystreet/images/compass-arrow-white-up.svg");
-  background-position: center bottom 13px;
-  background-size: 10px auto;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
+  background-position: 0 0;
   #{$right}: 30px;
   #{$left}: auto;
   top: 0;
 }
-#ns_fms_pan_zoom_pandown,
 #fms_pan_zoom_pandown {
-  background-image: inline-image("../fixmystreet/images/compass-arrow-white-down.svg");
-  background-position: center top 13px;
-  background-size: 10px auto;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
+  background-position: 0 -36px;
   #{$right}: 30px;
   #{$left}: auto;
   top: 72px;
 }
-#ns_fms_pan_zoom_panleft,
 #fms_pan_zoom_panleft {
-  background-image: inline-image("../fixmystreet/images/compass-arrow-white-left.svg");
-  background-position: left 13px center;
-  background-size: 6px auto;
+  background-position: -36px 0;
   width: 48px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
   #{$right}: flip(48px, 0);
   #{$left}: auto;
   top: 36px;
 }
-#ns_fms_pan_zoom_panright,
 #fms_pan_zoom_panright {
-  background-image: inline-image("../fixmystreet/images/compass-arrow-white-right.svg");
-  background-position: right 13px center;
-  background-size: 6px auto;
+  background-position: -36px -36px;
   width: 48px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
   #{$right}: flip(0, 48px);
   #{$left}: auto;
   top: 36px;
 }
-#ns_fms_pan_zoom_zoomin,
 #fms_pan_zoom_zoomin {
-  background-image: inline-image("../fixmystreet/images/zoom-in-white.svg");
-  background-position: center;
-  background-size: 16px;
+  background-position: -84px 0;
   padding-top: 44px;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
   #{$right}: 0;
   top: 0;
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    bottom: 0;
-    left: -10px;
-  }
 }
-#ns_fms_pan_zoom_zoomout,
 #fms_pan_zoom_zoomout {
-  background-image: inline-image("../fixmystreet/images/zoom-out-white.svg");
-  background-position: center;
-  background-size: 16px auto;
+  background-position: -120px 100%;
   padding-top: 44px;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
   #{$right}: 0;
   top: 44px;
-
-  &:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: -10px;
-    bottom: -5px;
-    left: -10px;
-  }
 }
 
 .map-links {
-  $panzoom-button-height: 44px;
-  $panzoom-gutter: 10px;
-  $maplink-button-height: 36px;
+  $panzoom-button-height: 2.75em; // 44px
+  $panzoom-gutter: 0.5em;
 
   display: none; // Not shown unless full screen on mobile
   position: absolute;
@@ -1976,9 +1877,9 @@ html.js #map .noscript {
   @include clearfix();
 
   .map-reporting & {
-    // #fms_pan_zoom has { top: 40px } during reporting,
-    // rather than { top: 10px }.
-    top: 40px + ($panzoom-button-height * 2);
+    // #fms_pan_zoom has { top: 2.75em } during reporting,
+    // rather than { top: 0.5em }.
+    top: 2.75em + ($panzoom-button-height * 2);
   }
 
   .map-fullscreen & {
@@ -1986,39 +1887,32 @@ html.js #map .noscript {
   }
 
   & > * {
-    position: relative;
     display: block;
     float: #{$right};
     clear: both;
-    width: $maplink-button-height;
-    height: $maplink-button-height;
+    overflow: hidden;
+    width: 36px;
+    height: 0;
+    padding-top: 36px;
     opacity: 0.85;
-    color: #fff !important;
-    background-color: #222;
+    background: #222;
     background-position: flip(100% 0, 0 0);
     background-repeat: no-repeat;
-    background-size: $maplink-button-height $maplink-button-height;
+    background-size: 36px 36px;
     border-radius: 5px;
     margin-top: $panzoom-gutter; // vertical space between links
-    text-decoration: none !important;
 
-    &:before {
-      content: "";
-      position: absolute;
-      top: -5px;
-      right: -10px;
-      bottom: -5px;
-      left: -10px;
-    }
-
-    .map-link-label {
-      position: absolute;
-      left: -10000px;
-      top: auto;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
+    &:hover,
+    &:focus {
+      overflow: visible;
+      width: auto;
+      height: auto;
+      padding: flip(6px 40px 6px 10px, 6px 10px 6px 40px);
+      line-height: 24px;
       white-space: nowrap;
+      color: #fff;
+      text-decoration: none;
+      opacity: 1;
     }
   }
 
@@ -2489,25 +2383,28 @@ label .muted {
 
 .pagination {
   text-align: center;
-  padding: 1em;
-  background: $pagination_background;
+  padding: 0.5em 1em;
+  background: #eee;
   position: relative;
-
   .prev {
     position: absolute;
-    #{$left}: 1em;
+    #{$left}: 0.5em;
   }
-
   .next {
     position: absolute;
-    #{$right}: 1em;
+    #{$right}: 0.5em;
   }
-}
-
-.map-alternatives, .map-alternatives__display {
-  margin: 16px 0;
-  font-size: 14px;
-  color: #666;
+  a {
+    @include inline-block;
+    color: $primary_text;
+    background: $primary;
+    padding-#{$left}: 0.5em;
+    padding-#{$right}: 0.5em;
+    &:hover {
+      text-decoration: none;
+      background: $primary/1.1;
+    }
+  }
 }
 
 // this is a bit of a hack to get some differentation between desk and mobile
@@ -2948,16 +2845,13 @@ a#geolocate_link {
   .olControlAttribution,
   .olControlPanZoom,
   .sub-map-links,
-  #ns_fms_pan_zoom,
   #fms_pan_zoom,
   .screen-only,
   .olMapViewport,
   .big-green-banner,
   .click-the-map,
-  .map-alternatives,
-  .map-alternatives__display,
-  .my-account-buttons, 
-  .screen-reader-only {
+  #skip-this-step,
+  .my-account-buttons {
     display: none !important;
   }
 
@@ -3065,10 +2959,6 @@ $emergency-message-border: 1px solid #525252 !default;
   & > :last-child {
     margin-bottom: 0;
   }
-}
-
-.keyboard-instructions-wrapper, .keyboard-pin {
-  display: none;
 }
 
 @import "_admin";

@@ -5,16 +5,29 @@ if (!fixmystreet.maps) {
 }
 
 var defaults = {
-    http_wfs_url: "https://tilma.mysociety.org/mapserver/highways",
+    http_options: {
+        url: "https://tilma.mysociety.org/mapserver/highways",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     asset_type: 'area',
     // this covers zoomed right out on Cumbrian sections of
     // the M6
     max_resolution: 20,
-    srsName: "EPSG:3857"
+    srsName: "EPSG:900913",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Highways",
+    http_options: {
+        params: {
+            TYPENAME: "Highways"
+        }
+    },
     stylemap: fixmystreet.assets.stylemap_invisible,
     always_visible: true,
 
@@ -41,7 +54,6 @@ fixmystreet.assets.add(defaults, {
     nearest_radius: 15,
     actions: {
         found: function(layer, feature) {
-            var category = fixmystreet.reporting.selectedCategory().category;
             if (fixmystreet.assets.selectedFeature()) {
                 $('.js-reporting-page--highways').remove();
                 return;
@@ -53,11 +65,7 @@ fixmystreet.assets.add(defaults, {
                 // received new data from the server (but the pin drop had
                 // already shown the HE message)
                 if ($('#js-highways:checked').length) {
-                    if (category && !category.match('NH')) {
-                        he_council_litter_cat_selected();
-                    } else {
-                        he_selected();
-                    }
+                    he_selected();
                 } else {
                     non_he_selected();
                 }
@@ -98,21 +106,6 @@ function he_selected() {
     fixmystreet.body_overrides.only_send('National Highways');
     fixmystreet.body_overrides.allow_send('National Highways');
     regenerate_category(true);
-    $(fixmystreet).trigger('report_new:highways_change');
-    if (window.location.href.indexOf('&he_referral=1') != -1) {
-        $('#problem_form .js-reporting-page--next').click();
-        var message = "<div class='box-warning' id='national-highways-referral'>Please select the local council's most appropriate option for the litter or flytipping issue you would like to report.</div>";
-        $('#js-top-message').append(message);
-        $('.js-reporting-page--next').on('click', function() {
-            $('#national-highways-referral').remove();
-        });
-    }
-}
-
-function he_council_litter_cat_selected() {
-    fixmystreet.body_overrides.remove_only_send();
-    fixmystreet.body_overrides.do_not_send('National Highways');
-    regenerate_category(true); // DO want to keep NH top-level picked
     $(fixmystreet).trigger('report_new:highways_change');
 }
 

@@ -18,15 +18,22 @@ OpenLayers.Protocol.Peterborough = OpenLayers.Class(OpenLayers.Protocol.HTTP, {
 var defaults = {
     max_resolution: 4.777314267158508,
     srsName: "EPSG:3857",
-    body: "Peterborough City Council"
+    body: "Peterborough City Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 var tilma_defaults = $.extend(true, {}, defaults, {
-    http_wfs_url: fixmystreet.staging ? "https://tilma.staging.mysociety.org/mapserver/peterborough" : "https://tilma.mysociety.org/mapserver/peterborough",
+    http_options: {
+        url: fixmystreet.staging ? "https://tilma.staging.mysociety.org/mapserver/peterborough" : "https://tilma.mysociety.org/mapserver/peterborough",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
     geometryName: 'msGeometry'
 });
-
-var url_base = 'https://tilma.mysociety.org/resource-proxy/proxy.php?https://peterborough.assets/';
 
 var arcgis_defaults = $.extend(true, {}, defaults, {
     protocol_class: OpenLayers.Protocol.Peterborough,
@@ -43,11 +50,10 @@ var arcgis_defaults = $.extend(true, {}, defaults, {
 
 var waste_categories = ['General fly tipping', 'Hazardous fly tipping', 'Offensive graffiti', 'Non offensive graffiti', 'Offensive graffiti - STAFF ONLY' ];
 
-fixmystreet.assets.add(arcgis_defaults, {
+fixmystreet.assets.add(tilma_defaults, {
     http_options: {
-        url: url_base + '7/query?',
         params: {
-            outFields: 'USRN',
+            TYPENAME: "highways"
         }
     },
     nearest_radius: 2,
@@ -55,17 +61,29 @@ fixmystreet.assets.add(arcgis_defaults, {
     non_interactive: true,
     always_visible: true,
     usrn: {
-        attribute: 'USRN',
+        attribute: 'Usrn',
         field: 'site_code'
     },
     name: "Adopted Highways"
+});
+
+// This is required so that the found/not found actions are fired on category
+// select and pin move rather than just on asset select/not select.
+OpenLayers.Layer.PeterboroughVectorAsset = OpenLayers.Class(OpenLayers.Layer.VectorAsset, {
+    initialize: function(name, options) {
+        OpenLayers.Layer.VectorAsset.prototype.initialize.apply(this, arguments);
+        $(fixmystreet).on('maps:update_pin', this.checkSelected.bind(this));
+        $(fixmystreet).on('report_new:category_change', this.checkSelected.bind(this));
+    },
+
+    CLASS_NAME: 'OpenLayers.Layer.PeterboroughVectorAsset'
 });
 
 var NEW_TREE_CATEGORY_NAME = 'Request for tree to be planted';
 var UNKNOWN_LIGHT_CATEGORY_NAME = 'Problem with a light not shown on map';
 
 var trees_defaults = $.extend(true, {}, tilma_defaults, {
-    class: OpenLayers.Layer.VectorAssetMove,
+    class: OpenLayers.Layer.PeterboroughVectorAsset,
     select_action: true,
     actions: {
         asset_found: fixmystreet.message_controller.asset_found,
@@ -82,13 +100,21 @@ var trees_defaults = $.extend(true, {}, tilma_defaults, {
 });
 
 fixmystreet.assets.add(trees_defaults, {
-    wfs_feature: "tree_groups",
+    http_options: {
+        params: {
+            TYPENAME: "tree_groups"
+        }
+    },
     asset_type: 'area',
     asset_item: 'tree group'
 });
 
 fixmystreet.assets.add(trees_defaults, {
-    wfs_feature: "tree_points",
+    http_options: {
+        params: {
+            TYPENAME: "tree_points"
+        }
+    },
     asset_type: 'spot',
     asset_item: 'tree'
 });
@@ -97,7 +123,11 @@ fixmystreet.assets.add(trees_defaults, {
 // separate layer with pin-snapping disabled for new tree requests.
 // The new tree request category is disabled in the other tree point layer.
 fixmystreet.assets.add(tilma_defaults, {
-    wfs_feature: "tree_points",
+    http_options: {
+        params: {
+            TYPENAME: "tree_points"
+        }
+    },
     asset_id_field: 'TREE_CODE',
     asset_type: 'spot',
     asset_category: NEW_TREE_CATEGORY_NAME,
@@ -113,14 +143,18 @@ var streetlight_stylemap = new OpenLayers.StyleMap({
 });
 
 var light_defaults = $.extend(true, {}, tilma_defaults, {
-    wfs_feature: "StreetLights",
+    http_options: {
+        params: {
+            TYPENAME: "StreetLights"
+        }
+    },
     asset_id_field: 'UNITID',
     asset_type: 'spot',
     asset_item: 'light'
 });
 
 fixmystreet.assets.add(light_defaults, {
-    class: OpenLayers.Layer.VectorAssetMove,
+    class: OpenLayers.Layer.PeterboroughVectorAsset,
     stylemap: streetlight_stylemap,
     feature_code: 'UNITNO',
     attributes: {
@@ -158,49 +192,7 @@ fixmystreet.assets.add(light_defaults, {
     asset_item_message: ''
 });
 
-var bin_defaults = $.extend(true, {}, arcgis_defaults, {
-    http_options: {
-        url: url_base + '0/query?',
-        params: {
-            outFields: 'OBJECTID,Reference,Location',
-        }
-    },
-    class: OpenLayers.Layer.VectorAssetMove,
-    select_action: true,
-    actions: {
-        asset_found: fixmystreet.message_controller.asset_found,
-        asset_not_found: fixmystreet.message_controller.asset_not_found
-    },
-    attributes: {
-        asset_details: function() {
-            var a = this.attributes;
-            return a.Reference + ", " + a.Location;
-        },
-        central_asset_id: 'OBJECTID'
-    },
-    asset_id_field: 'OBJECTID',
-    asset_type: 'spot'
-});
-
-fixmystreet.assets.add(bin_defaults, {
-    http_options: {
-      params: {
-        where: "Type='Litter Bin'"
-      }
-    },
-    asset_category: 'Litter bin',
-    asset_item: 'litter bin'
-});
-
-fixmystreet.assets.add(bin_defaults, {
-    http_options: {
-      params: {
-        where: "Type='Dog Waste Bin'"
-      }
-    },
-    asset_category: 'Dog bin',
-    asset_item: 'dog waste bin'
-});
+var url_base = 'https://tilma.mysociety.org/resource-proxy/proxy.php?https://peterborough.assets/';
 
 var flytipping_defaults = $.extend(true, {}, arcgis_defaults, {
     http_options: {
@@ -222,7 +214,7 @@ var flytipping_defaults = $.extend(true, {}, arcgis_defaults, {
 // PCC Property Combined
 fixmystreet.assets.add(flytipping_defaults, {
     http_options: {
-      url: url_base + '4/query?',
+      url: url_base + '2/query?',
     },
     actions: {
         found: function(layer) {

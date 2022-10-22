@@ -23,21 +23,7 @@
 
 <div class="filters">
   [% IF body %]
-    [% IF extra_bodies %]
-    <p>
-      <label for="body">[% loc('Body:') %]</label>
-      <select class="form-control" name="body" id="body">
-        <option value="[% default_body.id %]">[% default_body.name %]</option>
-        <option disabled>---</option>
-        [% FOR b IN extra_bodies %]
-          <option value="[% b.id %]"[% ' selected' IF b.id == body.id %]>[% b.name %]</option>
-        [% END %]
-      </select>
-    </p>
-    [% ELSE %]
     <input type="hidden" name="body" value="[% body.id | html %]">
-    [% END %]
-
     [% IF NOT c.user.area_ids.size %]
     <p>
         <label for="ward">[% loc('Ward:') %]</label>
@@ -85,17 +71,6 @@
           [% END %]
         </select>
     </p>
-    [% IF roles.size %]
-    <p>
-      <label for="role">[% loc('Role:') %]</label>
-      <select class="form-control" name="role" id="role">
-          <option value=''>[% loc('All') %]</option>
-        [% FOR role IN roles %]
-          <option [% 'selected ' IF role.id == q_role %] value="[% role.id %]">[% role.name %]</option>
-        [% END %]
-      </select>
-    </p>
-    [% END %]
     <p>
         <label for="start_date">[% loc('Start Date') %]</label>
         <input name="start_date" id="start_date" type="date" value="[% start_date | html %]" class="form-control">
@@ -150,7 +125,7 @@
         <th scope="col">[% loc('Total') %]</th>
       [% END %]
     </tr>
-  [% FOR k IN rows %][% k_safe = mark_safe(k) %]
+  [% FOR k IN rows %]
     <tr>
       [% IF group_by == 'state' %]
         <th scope="row">[% prettify_state(k) %]</th>
@@ -158,15 +133,15 @@
         <th scope="row">[% k %]</th>
       [% END %]
       [% IF group_by == 'category+state' %]
-        <td>[% grouped.$k_safe.open OR 0 %]</td>
-        <td>[% grouped.$k_safe.closed OR 0 %]</td>
-        <td>[% grouped.$k_safe.fixed OR 0 %]</td>
-        <td>[% grouped.$k_safe.total OR 0 %]</td>
+        <td>[% grouped.$k.open OR 0 %]</td>
+        <td>[% grouped.$k.closed OR 0 %]</td>
+        <td>[% grouped.$k.fixed OR 0 %]</td>
+        <td>[% grouped.$k.total OR 0 %]</td>
       [% ELSE %]
         [% FOR k2 IN columns.sort %]
-          <td>[% grouped.$k_safe.$k2 OR 0 %]</td>
+          <td>[% grouped.$k.$k2 OR 0 %]</td>
         [% END %]
-        <td>[% grouped.$k_safe.total OR 0 %]</td>
+        <td>[% grouped.$k.total OR 0 %]</td>
       [% END %]
     </tr>
   [% END %]

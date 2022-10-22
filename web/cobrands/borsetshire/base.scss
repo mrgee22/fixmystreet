@@ -4,103 +4,63 @@
 
 @import "../sass/base";
 
-#site-header {
-    border-bottom: 1px solid $color-societyworks-borders;
-    padding: 1em 0;
-}
-
 #site-logo {
-    width: (240px * 0.75);
-    height: (60px * 0.75);
-    @include svg-background-image('/cobrands/borsetshire/images/logo');
-    background-position: 50% 50%;
-    background-repeat: no-repeat;
-    background-size: (240px * 0.75) (60px * 0.75);
+    background-position: 0 0;
+    background-size: 120px 32px;
+    height: 32px;
+    width: 120px;
+    @include svg-background-image('images/site-logo-mobile');
 }
 
-#report-cta {
-    background-color: $color-societyworks-yellow;
-    border: none;
-    color: #000;
-    font-weight: bold;
-    padding: 0.4em 0.8em;
-    border-radius: 1em;
-
-    &:hover,
-    &:focus {
-        background-color: darken($color-societyworks-yellow, 10%);
-        color: #000;
+#site-header {
+    .container {
+        padding: 1em; // up from default `0 1em`
     }
 }
 
-#front-main {
-    margin: 0;
-    padding: 2em 1em;
-    background: $primary;
-    text-align: left;
-    border-bottom: 1px solid $color-societyworks-borders;
+#site-subheader,
+.site-header__fake-nav {
+    display: none;
+}
 
-    #postcodeForm {
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        color: inherit;
-        font-family: inherit;
+.homepage-login-hint {
+    padding: 1.5em 0;
+    background-color: rgb(0, 61, 101);
+    background-color: darken($color-borsetshire-blue, 20%);
+    color: #fff;
 
-        div {
-            border: none;
-            background: transparent;
+    .container {
+        position: relative;
 
-            input#pc {
-                background: #fff;
-                border-radius: 4px;
-                margin-right: 0.5em;
-                padding: 0.5em;
-                border: 1px solid #aaa;
-            }
-
-            input#sub {
-                border-radius: 4px;
-                background: $color-societyworks-yellow;
-                color: #000;
-                font-weight: bold;
-                padding: 0.5em 1em;
-
-                &:hover, &:focus {
-                    background: darken($color-societyworks-yellow, 10%);
-                }
-            }
+        // Little arrow.
+        &:before {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            position: absolute;
+            border: 0.5em solid transparent;
+            border-top-width: 0;
+            border-bottom-color: darken($color-borsetshire-blue, 20%);
+            top: -1.5em;
+            right: 1em;
+            margin-top: -0.5em;
         }
     }
 
-    h1 {
-        margin-top: 0;
+    h2 {
+        margin: 0;
+        font-size: 1.3em;
     }
-}
 
-a.geolocate-link {
-    padding: 0.5em 0;
-
-    svg {
-        display: inline-block;
-        margin-right: 0.3em;
-        vertical-align: -0.1em;
+    p {
+        margin: 0.5em 0 0 0;
     }
-}
 
-.big-green-banner {
-    color: $color-societyworks-black;
-    text-transform: none;
-    font-family: $body-font;
-}
-
-.box-warning {
-    background-color: $color-societyworks-yellow;
-}
-
-body.mappage {
-    #site-header {
-        box-sizing: border-box; // reveal the border-bottom
+    a {
+        font-weight: bold;
+        color: inherit;
+        text-decoration: underline;
     }
 }
 
@@ -133,181 +93,31 @@ body.authpage {
     }
 }
 
-.sticky-sidebar {
-    margin: 2em 0;
+.fms-pro-promo {
+  margin: 2em -1em;
+  padding: 1em;
+  background: $primary;
+  color: $primary_text;
 
-    li {
-        margin: 0;
+  .lead {
+    font-weight: bold;
+  }
 
-        a, strong {
-            border: 1px solid #ddd;
-            display: block;
-            padding: 0.5em 1em;
-        }
+  & > :first-child {
+    margin-top: 0;
+  }
 
-        & + li {
-            a, strong {
-                border-top: none;
-            }
-        }
+  & > :last-child {
+    margin-bottom: 0;
+  }
 
-        &:first-child {
-            a, strong {
-                border-radius: 4px 4px 0 0;
-            }
-        }
-
-        &:last-child {
-            a, strong {
-                border-radius: 0 0 4px 4px;
-            }
-        }
-    }
+  .btn {
+    @include button-variant($text: #000, $hover-text: #000);
+  }
 }
 
-@import "../sass/waste";
-
-// Waste style overrides
-.waste {
-    .content {
-        margin: 2em 0;
-    }
-
-    #front-main h1 {
-        margin-bottom: 0;
-    }
-
-    .govuk-heading-xl,
-    .govuk-heading-l,
-    .govuk-heading-m,
-    .govuk-heading-s,
-    .govuk-body,
-    .govuk-body-m,
-    .govuk-accordion__section-button,
-    .govuk-button,
-    .govuk-fieldset__legend,
-    .govuk-fieldset__legend--xl,
-    .govuk-fieldset__legend--l,
-    .govuk-fieldset__legend--m,
-    .govuk-fieldset__legend--s,
-    .govuk-fieldset__heading,
-    .govuk-label,
-    .govuk-checkboxes__item,
-    .govuk-summary-list,
-    .govuk-input,
-    .govuk-details,
-    .govuk-radios__item,
-    .govuk-radios__divider,
-    .govuk-select,
-    .govuk-skip-link,
-    .govuk-textarea {
-        -webkit-font-smoothing: auto;
-        -moz-osx-font-smoothing: auto;
-    }
-
-    .govuk-heading-xl {
-        font-family: $heading-font;
-        color: inherit;
-        font-size: 2.2em;
-        margin-bottom: 1em;
-    }
-
-    .govuk-heading-l,
-    .govuk-heading-m,
-    .govuk-fieldset__heading,
-    .govuk-summary-list {
-        font-family: inherit;
-        color: inherit;
-    }
-
-    .govuk-heading-l {
-        font-size: 1.4375em;
-    }
-
-    .govuk-heading-m {
-        font-size: 1.125em;
-    }
-
-    .govuk-button {
-        @include button-size();
-        box-shadow: none;
-
-        @include button-variant(
-            lighten($color-societyworks-yellow, 10%),
-            $color-societyworks-yellow,
-            $color-societyworks-yellow,
-            $color-societyworks-black,
-            darken($color-societyworks-yellow, 10%),
-            $color-societyworks-yellow,
-            darken($color-societyworks-yellow, 10%),
-            $color-societyworks-black
-        );
-
-        &:focus {
-            outline: auto;
-        }
-
-        &:focus:not(:active):not(:hover) {
-            box-shadow: none;
-            border-color: darken($color-societyworks-yellow, 10%);
-        }
-    }
-
-    .govuk-button--secondary {
-        @include button-variant();
-
-        &:focus:not(:active):not(:hover) {
-            border-color: #ccc;
-        }
-    }
-
-    .govuk-button-s {
-        font-size: 1em;
-    }
-
-    .govuk-input {
-        border: 1px solid $form-control-border-color;
-        @include border-radius(4px);
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-
-        &:focus {
-            border: 1px solid $form-control-border-color;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-            outline: auto;
-        }
-    }
-
-    .govuk-button-s {
-        font-size: 1em;
-    }
+body.mappage .ms-header {
+    display: none;
 }
 
-//Secondary navbar
-.secondary-navbar {
-    border-bottom: 1px solid $color-societyworks-borders;
-    background-color: $color-societyworks-yellow;
-
-    .container {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-
-        span {
-            text-align: center;
-            margin: 5px 0;
-        }
-
-        a.btn {
-            margin: 5px 0px 5px 10px;
-            padding: 0.5em 0.75em;
-            background: lighten($color: $color-societyworks-yellow, $amount: 10%);
-            border: 2px solid transparentize($color: white, $amount: 0.3);
-            &:hover {
-                background: transparent;
-                border: 2px solid transparentize($color: #333333, $amount: 0.3);
-            }
-        }
-    }
-}
+@import "mysoc-header";

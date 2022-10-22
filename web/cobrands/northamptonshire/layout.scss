@@ -2,13 +2,13 @@
 
 @import "../sass/layout";
 
-// Northamptonshire have asked for the logos to be removed from the header,
-// so move the nav menu over to the left where the logo used to be.
-#main-nav {
-    float: left !important;
-}
 #site-logo {
-    z-index: -1;
+    width: 450px;
+
+    // Prevents the wide double logo overlapping nav items at medium screen widths
+    @media (max-width: 60em) {
+        width: 260px;
+    }
 }
 
 #site-header {

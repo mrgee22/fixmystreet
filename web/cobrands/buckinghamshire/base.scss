@@ -77,11 +77,13 @@ h4 {
 
 // Set the default font colour everywhere
 body, .content {
-  color: $bucks_charcoal;
+  color: $primary_text;
 }
 
 // Make sure the numbers on the front page have the correct font weight
 #front_stats {
+  color: white;
+
   div {
     @extend %bold-font;
   }
@@ -102,7 +104,6 @@ dl dt {
   #postcodeForm {
     margin: 1em 0 0 0;
     padding: 0;
-    color: $bucks_charcoal;
     background: #fff;
 
     div input#sub {
@@ -118,14 +119,23 @@ dl dt {
   @include bucks-button();
     &:hover,
     &:active,
-    &:focus {
+    &:focus { 
       background-image: none;
       color: $bucks_charcoal !important;
     }
 }
 
+.pagination a {
+  color: #fff;
+}
+
 label {
   @extend %bold-font;
+}
+
+// uses important because btn also uses it
+#highways .segmented-control--radio input:checked + label.btn {
+    color: $g7 !important;
 }
 
 .description_tips  {
@@ -143,12 +153,6 @@ label {
   background-color: #f79f73;
   color: #000;
   border: none;
-}
-
-input[type="text"], input[type="email"], textarea { @extend %normal-font;}
-
-.parish-all-reports {
-  margin-top: 1em;
 }
 
 @import "../sass/claims";

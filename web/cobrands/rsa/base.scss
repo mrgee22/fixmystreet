@@ -1,0 +1,25 @@
+@import "../sass/h5bp";
+@import "./_colours";
+@import "../sass/mixins";
+
+@import "../sass/base";
+
+#site-logo {
+    width: 178px;
+    height: 47px;
+    padding: 0;
+    background: url('/cobrands/rsa/images/ResolveIT white back.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 178px 47px;
+}
+
+// Shown at bottom of homepage, among other places
+.footer-marketing {
+    text-align: center;
+    margin-top: 0em;
+  
+    & > :last-child {
+      margin-bottom: 0;
+    }
+  }

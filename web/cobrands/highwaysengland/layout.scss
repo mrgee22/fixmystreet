@@ -54,7 +54,7 @@ p.form-error {
 #front-main {
     background: $color-he-grey-2;
     color: inherit;
-    padding: 0 0 2% 0;
+    padding: 5% 1em;
 
     #postcodeForm {
         overflow: visible;
@@ -73,16 +73,27 @@ p.form-error {
     h1 {
         font-size: 3em;
         font-weight: bold;
-        color: $white;
+        color: $color-he-darkblue;
     }
+}
 
-    .hero-bg {
-        padding: 5% 1em;
-    }
+.front-blurb,
+.highwaysengland-warning {
+    margin: 2em 0;
 }
 
 .site-footer {
     padding-top: 2em;
     padding-bottom: 2em;
     margin-top: 2em;
+
+    .powered-by-fms {
+        margin: 0;
+    }
+
+    .container {
+        @include flex-container();
+        @include justify-content(space-between);
+        @include flex-align(center);
+    }
 }

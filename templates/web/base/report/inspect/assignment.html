@@ -1,12 +1,8 @@
-[% inspectors = c.user.from_body.staff_with_permission('report_inspect') %]
-[%
-    IF c.user.has_permission_to('assign_report_to_user', problem.bodies_str_ids)
-        && inspectors
-%]
+[% IF c.user.has_permission_to('assign_report_to_user', problem.bodies_str_ids) %]
     <p>
     <label for="assignment">[% loc('Assign to:') %]</label>
     <select class="form-control" name="assignment" id="assignment">
-        [% INCLUDE 'report/inspect/_assignment-options.html' %]
+        [% INCLUDE 'report/inspect/_assignment-options.html' body = c.user.from_body %]
     </select>
     </p>
 [% END %]

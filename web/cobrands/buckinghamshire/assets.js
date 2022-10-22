@@ -4,24 +4,20 @@ if (!fixmystreet.maps) {
     return;
 }
 
-// ArcGIS wants to receive the bounding box as a 'geometry' parameter, not 'bbox'
-var format = new OpenLayers.Format.QueryStringFilter();
-OpenLayers.Protocol.BuckinghamshireHTTP = OpenLayers.Class(OpenLayers.Protocol.HTTP, {
-    filterToParams: function(filter, params) {
-        params = format.write(filter, params);
-        params.geometry = params.bbox;
-        delete params.bbox;
-        return params;
-    },
-    CLASS_NAME: "OpenLayers.Protocol.BuckinghamshireHTTP"
-});
-
 var wfs_host = fixmystreet.staging ? 'tilma.staging.mysociety.org' : 'tilma.mysociety.org';
 var tilma_url = "https://" + wfs_host + "/mapserver/bucks";
-var drains_proxy_url = "https://" + wfs_host + "/proxy/bcc/drains/wfs";
+var proxy_base_url = "https://" + wfs_host + "/proxy/bcc/";
 
 var defaults = {
-    http_wfs_url: tilma_url,
+    http_options: {
+        url: tilma_url,
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::27700"
+        }
+    },
     asset_type: 'spot',
     max_resolution: 4.777314267158508,
     asset_id_field: 'central_as',
@@ -31,11 +27,16 @@ var defaults = {
     },
     geometryName: 'msGeometry',
     srsName: "EPSG:27700",
-    body: "Buckinghamshire Council"
+    body: "Buckinghamshire Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Grit_Bins",
+    http_options: {
+        params: {
+            TYPENAME: "Grit_Bins"
+        }
+    },
     asset_category: ["Salt bin damaged", "Salt bin refill"],
     asset_item: 'grit bin'
 });
@@ -73,8 +74,11 @@ var labeled_defaults = $.extend(true, {}, defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "StreetLights_Union",
-    class: OpenLayers.Layer.VectorAssetMove,
+    http_options: {
+        params: {
+            TYPENAME: "StreetLights_Union"
+        }
+    },
     asset_category: [
         'Light on during the day',
         'Street light dim',
@@ -91,33 +95,35 @@ fixmystreet.assets.add(labeled_defaults, {
         var extra = '. Only ITEMs maintained by Transport for Buckinghamshire are displayed.';
         extra = extra.replace(/ITEM/g, data.name);
         return 'You have selected ' + data.name + ' <b>' + data.id + '</b>' + extra;
-    },
-    actions: {
-        asset_found: function(asset) {
-            fixmystreet.message_controller.asset_found.call(this, asset);
-            fixmystreet.assets.named_select_action_found.call(this, asset);
-        },
-        asset_not_found: function() {
-            fixmystreet.message_controller.asset_not_found.call(this);
-            fixmystreet.assets.named_select_action_not_found.call(this);
-        }
     }
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "IlluminatedBollards",
+    http_options: {
+        params: {
+            TYPENAME: "IlluminatedBollards"
+        }
+    },
     asset_category: ["Bollard light not working"],
     asset_item: 'bollard'
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Bollards",
+    http_options: {
+        params: {
+            TYPENAME: "Bollards"
+        }
+    },
     asset_category: ["Bollards or railings"],
     asset_item: 'bollard'
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Beacons",
+    http_options: {
+        params: {
+            TYPENAME: "Beacons"
+        }
+    },
     asset_category: [
           'Belisha Beacon broken',
         ],
@@ -125,7 +131,11 @@ fixmystreet.assets.add(labeled_defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Beacon_Column",
+    http_options: {
+        params: {
+            TYPENAME: "Beacon_Column"
+        }
+    },
     asset_category: [
           'Belisha Beacon broken',
         ],
@@ -133,7 +143,11 @@ fixmystreet.assets.add(labeled_defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Crossings",
+    http_options: {
+        params: {
+            TYPENAME: "Crossings"
+        }
+    },
     asset_category: [
           'Traffic lights & crossings problems with buttons, beep or lamps',
           'Traffic lights & crossings problems with timings',
@@ -142,46 +156,21 @@ fixmystreet.assets.add(labeled_defaults, {
 });
 
 fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "Signs_Union",
+    http_options: {
+        params: {
+            TYPENAME: "Signs_Union"
+        }
+    },
     asset_category: [
           'Sign light not working',
           'Sign problem',
-          'Dirty signs'
         ],
-    asset_item: 'sign',
-
-    // Want to show signs for the parish "Dirty signs" categories, so skip body checks.
-    body: null
+    asset_item: 'sign'
 });
 
-fixmystreet.assets.add(labeled_defaults, {
-    wfs_feature: "BusStops",
-    asset_group: "Bus stop/shelter issue",
-    construct_asset_name: null,
-    asset_item: 'bus stop',
-    asset_id_field: 'feature_id',
-    attributes: {
-        bus_stop_number: 'feature_id'
-    }
-});
-
-// When the auto-asset selection of a layer occurs, the data for inspections
-// may not have loaded. So make sure we poke for a check when the data comes
-// in.
-function inspection_layer_loadend() {
-    var type = 'junctions';
-    var layer = fixmystreet.assets.layers.filter(function(elem) {
-        return elem.fixmystreet.body == "Buckinghamshire Council" &&
-        elem.fixmystreet.http_options &&
-        elem.fixmystreet.http_options.params &&
-        elem.fixmystreet.http_options.params.TYPENAME == type;
-    });
-    layer[0].checkSelected();
-}
-
-var layer = fixmystreet.assets.add(defaults, {
+fixmystreet.assets.add(defaults, {
     http_options: {
-        url: drains_proxy_url,
+        url: proxy_base_url + 'drains/wfs',
         params: {
             propertyName: 'id,msGeometry,asset_id,created,junction_cleaned',
             TYPENAME: "junction_inspections"
@@ -192,11 +181,10 @@ var layer = fixmystreet.assets.add(defaults, {
     asset_item: 'drain',
     non_interactive: true
 });
-layer.events.register( 'loadend', layer, inspection_layer_loadend);
 
 fixmystreet.assets.add(defaults, {
     http_options: {
-        url: drains_proxy_url,
+        url: proxy_base_url + 'drains/wfs',
         params: {
             propertyName: 'id,msGeometry,asset_id,created,last_inspected',
             TYPENAME: "junctions"
@@ -207,7 +195,7 @@ fixmystreet.assets.add(defaults, {
     select_action: true,
     construct_selected_asset_message: function(asset) {
         var junctionInspectionLayer = window.fixmystreet.assets.layers.filter(function(elem) {
-            return elem.fixmystreet.body == "Buckinghamshire Council" &&
+            return elem.fixmystreet.body == "Buckinghamshire Council" && 
             elem.fixmystreet.http_options.format.featureType == 'junction_inspections';
         });
         var inspection;
@@ -263,6 +251,30 @@ var non_bucks_types = [
     "HWSA", // HW: Whole Street Asset
     "P", // HW: PRIVATE
 ];
+
+// Since Buckinghamshire went unitary, if the user selects an ex-district
+// category we shouldn't enforce the road asset selection.
+var ex_district_categories = [
+    "Abandoned vehicles",
+    "Car Parks",
+    "Dog fouling",
+    "Flyposting",
+    "Flytipping",
+    "Graffiti",
+    "Parks/landscapes",
+    "Public toilets",
+    "Rubbish (refuse and recycling)",
+    "Street cleaning",
+    "Street nameplates"
+];
+
+function category_unselected_or_ex_district() {
+    var cat = fixmystreet.reporting.selectedCategory().category;
+    if (OpenLayers.Util.indexOf(ex_district_categories, cat) != -1) {
+        return true;
+    }
+    return false;
+}
 
 // We show roads that Bucks are and aren't responsible for, and display a
 // message to the user if they click something Bucks don't maintain.
@@ -323,27 +335,21 @@ $(fixmystreet).on('report_new:highways_change', function() {
 
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Whole_Street",
-    propertyNames: ['msGeometry', 'site_code', 'feature_ty'],
+    http_options: {
+        params: {
+            propertyName: 'msGeometry,site_code,feature_ty',
+            TYPENAME: "Whole_Street"
+        }
+    },
     stylemap: new OpenLayers.StyleMap({
         'default': highways_style
     }),
+    always_visible: true,
     non_interactive: true,
     road: true,
     asset_item: 'road',
     asset_type: 'road',
-    asset_group: [
-        'Drainage issues',
-        'Flytipping',
-        'Roads & Pavements',
-        'Salt & Gritting',
-        'Street Lights',
-        'Street Signs',
-        'Traffic Lights and crossings',
-        'Trees and vegetation',
-        'Trees',
-        'Grass, hedges and weeds'
-    ],
+    all_categories: true,
     actions: {
         found: function(layer, feature) {
             var map = {
@@ -351,23 +357,31 @@ fixmystreet.assets.add(defaults, {
                 "HWOA": '#js-not-council-road-other'
             };
             var msg_id = map[feature.attributes.feature_ty] || '#js-not-council-road';
+
+            fixmystreet.body_overrides.allow_send(layer.fixmystreet.body);
+            fixmystreet.body_overrides.remove_only_send();
             fixmystreet.message_controller.road_found(layer, feature, function(feature) {
+                // If an ex-district category is selected, always allow report
+                // regardless of road ownership.
+                if (category_unselected_or_ex_district()) {
+                    return true;
+                }
                 if (OpenLayers.Util.indexOf(bucks_types, feature.attributes.feature_ty) != -1) {
                     return true;
                 }
                 return false;
             }, msg_id);
         },
+
         not_found: function(layer) {
-            fixmystreet.message_controller.road_not_found(layer, function() {
-                var selected = fixmystreet.reporting.selectedCategory();
-                if (selected.group == 'Grass, hedges and weeds') {
-                    // Want to always show the road not found message.
-                    // This skips the is_only_body check in road_not_found
-                    return true;
-                }
-                return false;
-            });
+            // If an ex-district category is selected, always allow report.
+            fixmystreet.body_overrides.remove_only_send();
+            if (category_unselected_or_ex_district()) {
+                fixmystreet.body_overrides.allow_send(layer.fixmystreet.body);
+            } else {
+                fixmystreet.body_overrides.do_not_send(layer.fixmystreet.body);
+                fixmystreet.message_controller.road_not_found(layer);
+            }
         }
     },
     no_asset_msg_id: '#js-not-a-road',
@@ -381,7 +395,11 @@ fixmystreet.assets.add(defaults, {
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "WinterRoutes",
+    http_options: {
+        params: {
+            TYPENAME: "WinterRoutes"
+        }
+    },
     asset_category: "Snow and ice problem/winter salting",
     asset_item: "road",
     asset_type: "road",
@@ -409,66 +427,6 @@ fixmystreet.assets.add(defaults, {
             $('.js-reporting-page.js-gritting-notice').addClass('js-reporting-page--skip');
         }
     }
-});
-
-fixmystreet.assets.add(defaults, {
-    http_wfs_url: 'https://maps.buckscc.gov.uk/arcgis/services/Transport/BC_Car_Parks/MapServer/WFSServer',
-    wfs_feature: "BC_CAR_PARKS",
-    class: OpenLayers.Layer.VectorAssetMove,
-    select_action: true,
-    actions: {
-        asset_found: fixmystreet.message_controller.asset_found,
-        asset_not_found: fixmystreet.message_controller.asset_not_found
-    },
-    asset_group: "Car park issue",
-    asset_item: "car park",
-    asset_type: "area",
-    asset_item_message: "Pick a <b class=\"asset-ITEM\">ITEM</b> on the map &raquo;<br>Only car parks marked on the map with a grey box are maintained by Buckinghamshire",
-    no_asset_msg_id: '#js-not-council-car-park',
-    stylemap: new OpenLayers.StyleMap({
-        'default': new OpenLayers.Style({
-            fillColor: "#BBB",
-            fillOpacity: 0.5,
-            strokeWidth: 2,
-            strokeColor: '#666666'
-        })
-    }),
-    protocol_class: OpenLayers.Protocol.BuckinghamshireHTTP
-});
-
-// The maximum speed for reports to be sent to the parish council.
-var parish_speed_threshold = 30;
-
-fixmystreet.assets.add(defaults, {
-    http_wfs_url: 'https://maps.buckscc.gov.uk/arcgis/services/Transport/OS_Highways_Speed/MapServer/WFSServer',
-    wfs_feature: "OS_Highways_Speed:CORPGIS.CORPORATE.OS_Highways_Speed",
-    propertyNames: ['speed', 'shape'],
-    actions: {
-        found: function(layer, feature, criterion, msg_id) {
-            // Answer speed limit question based on speed limit of the road.
-            var $question = $('#form_speed_limit_greater_than_30');
-            if (feature.attributes.speed && feature.attributes.speed <= parish_speed_threshold) {
-                $question.val('no');
-            } else {
-                $question.val('yes');
-            }
-            // Fire the change event so the council text is updated.
-            $question.trigger('change');
-        },
-        not_found: function(layer) {
-            $('#form_speed_limit_greater_than_30').val('dont_know').trigger('change');
-        }
-    },
-    no_asset_msg_id: '#js-not-a-road',
-    asset_category: ["Grass cutting", "Hedge problem", "Dirty signs"],
-    non_interactive: true,
-    road: true,
-    asset_item: 'road',
-    asset_type: 'road',
-    stylemap: fixmystreet.assets.stylemap_invisible,
-
-    // Want to use this for parish categories as well as Bucks, so skip body checks.
-    body: null
 });
 
 })();

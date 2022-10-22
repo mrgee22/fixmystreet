@@ -5,8 +5,19 @@ if (!fixmystreet.maps) {
 }
 
 var defaults = {
-    http_wfs_url: fixmystreet.staging ? "https://tilma.staging.mysociety.org/mapserver/iow": "https://tilma.mysociety.org/mapserver/iow",
-    max_resolution: 1.194328566789627,
+    http_options: {
+        url: fixmystreet.staging ? "https://tilma.staging.mysociety.org/mapserver/iow": "https://tilma.mysociety.org/mapserver/iow",
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::27700"
+        }
+    },
+    max_resolution: {
+        'isleofwight': 0.5291677250021167,
+        'fixmystreet': 1.194328566789627
+    },
     attributes: {
         central_asset_id: 'central_asset_id',
         site_code: 'site_code'
@@ -14,6 +25,7 @@ var defaults = {
     asset_id_field: 'asset_id',
     geometryName: 'msGeometry',
     srsName: "EPSG:27700",
+    strategy_class: OpenLayers.Strategy.FixMyStreet,
     body: "Isle of Wight Council"
 };
 
@@ -26,11 +38,18 @@ var labeled_stylemap = new OpenLayers.StyleMap({
 });
 
 fixmystreet.assets.add($.extend(true, {}, defaults, {
-    wfs_feature: "streets",
+    http_options: {
+        params: {
+            TYPENAME: "streets"
+        }
+    },
     always_visible: true,
     non_interactive: true,
     asset_type: 'area',
-    max_resolution: 4.777314267158508,
+    max_resolution: {
+        'isleofwight': 6.614596562526458,
+        'fixmystreet': 4.777314267158508
+    },
     usrn: {
         attribute: 'SITE_CODE',
         field: 'site_code'
@@ -169,7 +188,11 @@ for (i = 0; i < point_category_list.length; i++) {
 
     fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
         asset_group: cat,
-        wfs_feature: layer
+        http_options: {
+            params: {
+                TYPENAME: layer
+            }
+        }
     }));
 }
 
@@ -179,40 +202,68 @@ for (i = 0; i < line_category_list.length; i++) {
 
     fixmystreet.assets.add($.extend(true, {}, line_asset_defaults, {
         asset_group: cat,
-        wfs_feature: layer
+        http_options: {
+            params: {
+                TYPENAME: layer
+            }
+        }
     }));
 }
 
 // non union layers
 fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
     asset_group: "Roads/Highways",
-    wfs_feature: "Fords"
+    http_options: {
+        params: {
+            TYPENAME: "Fords"
+        }
+    }
 }));
 
 fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
     asset_group: "Roads/Highways",
-    wfs_feature: "Furn-Grid_and_Stones"
+    http_options: {
+        params: {
+            TYPENAME: "Furn-Grid_and_Stones"
+        }
+    }
 }));
 
 
 fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
     asset_group: "Drainage",
-    wfs_feature: "Drainage_spot"
+    http_options: {
+        params: {
+            TYPENAME: "Drainage_spot"
+        }
+    }
 }));
 
 fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
     asset_group: "Car Parking",
-    wfs_feature: "Car_Parking"
+    http_options: {
+        params: {
+            TYPENAME: "Car_Parking"
+        }
+    }
 }));
 
 fixmystreet.assets.add($.extend(true, {}, line_asset_defaults, {
     asset_group: "Grass Verges & Weeds",
-    wfs_feature: "Verges-Natural"
+    http_options: {
+        params: {
+            TYPENAME: "Verges-Natural"
+        }
+    }
 }));
 
 fixmystreet.assets.add($.extend(true, {}, point_asset_defaults, {
     asset_group: "Dog Fouling",
-    wfs_feature: "Furn-Bins"
+    http_options: {
+        params: {
+            TYPENAME: "Furn-Bins"
+        }
+    }
 }));
 
 

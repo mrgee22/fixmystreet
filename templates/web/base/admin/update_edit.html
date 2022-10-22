@@ -7,16 +7,18 @@
     <input type="hidden" name="token" value="[% csrf_token %]" >
     <input type="hidden" name="submit" value="1" >
 <ul>
-    [%- uri = c.uri_for_email( '/report', update.problem_id ) %]
+    [%- cobrand_data = update.cobrand_data;
+        cobrand_data = c.data_for_generic_update IF !update.cobrand;
+        IF cobrand_data;
+            uri = c.uri_for_email( '/report', update.problem_id, cobrand_data );
+        ELSE;
+            uri = c.uri_for_email( '/report', update.problem_id );
+        END;
+    %]
 <li><a href="[% uri %]#update_[% update.id %]" class="admin-offsite-link">[% loc('View report on site' )%]</a></li>
 
 <li><label for='detail'>[% loc('Text:') %]</label>
 <textarea class="form-control" name='text' id='text' cols=60 rows=10>[% update.text | html %]</textarea></li>
-
-[% IF update.private_email_text %]
-<li><label for='email_detail'>[% loc('Template email response:') %]</label>
-<textarea class='form-control' name='email_detail' id='email_detail' cols=60 rows=10 readonly>[% update.private_email_text | html %]</textarea></li>
-[% END %]
 
 <li><label for="anonymous">[% loc('Anonymous:') %]</label>
 <select class="form-control" name="anonymous" id="anonymous">

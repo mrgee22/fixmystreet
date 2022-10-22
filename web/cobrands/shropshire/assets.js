@@ -8,7 +8,15 @@ var wfs_host = fixmystreet.staging ? 'tilma.staging.mysociety.org' : 'tilma.myso
 var tilma_url = "https://" + wfs_host + "/mapserver/shropshire";
 
 var defaults = {
-    http_wfs_url: tilma_url,
+    http_options: {
+        url: tilma_url,
+        params: {
+            SERVICE: "WFS",
+            VERSION: "1.1.0",
+            REQUEST: "GetFeature",
+            SRSNAME: "urn:ogc:def:crs:EPSG::27700"
+        }
+    },
     asset_type: 'spot',
     asset_id_field: 'CentralAssetId',
     attributes: {
@@ -16,7 +24,8 @@ var defaults = {
     },
     geometryName: 'msGeometry',
     srsName: "EPSG:27700",
-    body: "Shropshire Council"
+    body: "Shropshire Council",
+    strategy_class: OpenLayers.Strategy.FixMyStreet
 };
 
 var highways_style = new OpenLayers.Style({
@@ -27,7 +36,11 @@ var highways_style = new OpenLayers.Style({
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Street_Gazetteer",
+    http_options: {
+        params: {
+            TYPENAME: "Street_Gazetteer"
+        }
+    },
     stylemap: new OpenLayers.StyleMap({
          'default': highways_style
      }),
@@ -104,7 +117,11 @@ var streetlight_stylemap = new OpenLayers.StyleMap({
 
 fixmystreet.assets.add(defaults, {
     stylemap: streetlight_stylemap,
-    wfs_feature: "Lights_Union",
+    http_options: {
+        params: {
+            TYPENAME: "Lights_Union"
+        }
+    },
     asset_group: "Streetlights",
     asset_item: 'streetlight',
     asset_id_field: 'ASSET_ID',
@@ -136,7 +153,11 @@ fixmystreet.assets.add(defaults, {
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Traffic_Signal_Areas",
+    http_options: {
+        params: {
+            TYPENAME: "Traffic_Signal_Areas"
+        }
+    },
     asset_id_field: 'ASSET_ID',
     attributes: {
         central_asset_id: 'ASSET_ID',
@@ -146,7 +167,11 @@ fixmystreet.assets.add(defaults, {
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Illuminated_Bollards",
+    http_options: {
+        params: {
+            TYPENAME: "Illuminated_Bollards"
+        }
+    },
     asset_group: 'Illuminated signs',
     asset_item: 'bollard',
     asset_id_field: 'ASSET_ID',
@@ -156,19 +181,31 @@ fixmystreet.assets.add(defaults, {
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Grit_Bins",
+    http_options: {
+        params: {
+            TYPENAME: "Grit_Bins"
+        }
+    },
     asset_category: ["Salt bins replenish"],
     asset_item: 'salt bin'
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Cattle_Grids",
+    http_options: {
+        params: {
+            TYPENAME: "Cattle_Grids"
+        }
+    },
     asset_category: ["Cattle Grid"],
     asset_item: 'cattle grid'
 });
 
 fixmystreet.assets.add(defaults, {
-    wfs_feature: "Bridges",
+    http_options: {
+        params: {
+            TYPENAME: "Bridges"
+        }
+    },
     asset_category: ["Bridge"],
     asset_item: 'bridge'
 });
