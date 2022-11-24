@@ -14,17 +14,18 @@ subtest "check asset layer endpoint" => sub {
     my $defaults = { wfs_url => 'http://example.org', geometryName => 'msGeometry', srsName => 'EPSG:3857' };
     my $bridges = { wfs_feature => 'Bridges', asset_item => 'bridge', asset_category => 'Bridges' };
 
-    foreach ('fixmystreet', 'lincolnshire') {
+    foreach ('fixmystreet', 'lincolnshire', 'greenwich') {
         FixMyStreet::override_config {
             ALLOWED_COBRANDS => $_,
-            COBRAND_FEATURES => { asset_layers => { lincolnshire => [ $defaults, $bridges ] } },
+            COBRAND_FEATURES => { asset_layers => { lincolnshire => [ [ $defaults ], $bridges ] } },
         }, sub {
             $mech->get_ok('/js/asset_layers.js');
             my $content = $mech->encoded_content;
-            $content =~ /fixmystreet\.asset_layers\.lincolnshire_defaults = (\{.*?\})/;
+            $content =~ /defaults = (\{.*?\}\})/;
+            return unless $1;
             my $json = decode_json($1);
-            is_deeply $json, $defaults;
-            $content =~ /fixmystreet\.assets\.add\(defaults, (\{.*?\})\);/;
+            is_deeply $json, { default => $defaults };
+            $content =~ /fixmystreet\.assets\.add\(defaults\.default, (\{.*?\})\);/;
             $json = decode_json($1);
             is_deeply $json, $bridges;
         };

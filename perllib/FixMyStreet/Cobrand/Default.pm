@@ -73,7 +73,7 @@ sub feature {
     my $features = FixMyStreet->config('COBRAND_FEATURES');
     return unless $features && ref $features eq 'HASH';
     return unless $features->{$feature} && ref $features->{$feature} eq 'HASH';
-    return $features->{$feature}->{$self->moniker};
+    return $features->{$feature}->{$self->moniker} || $features->{$feature}->{_fallback};
 }
 
 sub csp_config {
@@ -134,6 +134,18 @@ restricted to a subset if we're on a cobrand that only wants some of the data.
 sub problems_on_map {
     my $self = shift;
     return $self->problems_on_map_restriction(FixMyStreet::DB->resultset('Problem'));
+}
+
+=item problems_on_dashboard
+
+Returns a ResultSet of Problems to be shown on the /dashboard.
+Defaults to the same as problems.
+
+=cut
+
+sub problems_on_dashboard {
+    my $self = shift;
+    return $self->problems;
 }
 
 =item updates
@@ -1387,7 +1399,7 @@ sub emergency_message {
         my $ooh = $self->ooh_times($body);
         $msg = $ooh_msg if $ooh->active;
     }
-    FixMyStreet::Template::SafeString->new($msg);
+    FixMyStreet::Template::SafeString->new($msg) if $msg;
 }
 
 sub ooh_times {

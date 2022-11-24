@@ -521,12 +521,26 @@ $.extend(fixmystreet.set_up, {
 
   autocomplete: function() {
     $('.js-autocomplete').each(function() {
+        var $this = $(this);
         accessibleAutocomplete.enhanceSelectElement({
             selectElement: this,
             displayMenu: 'overlay',
             required: $(this).prop('required') ? true : false,
             showAllValues: true,
-            defaultValue: ''
+            defaultValue: '',
+            confirmOnBlur: false,
+            onConfirm: function(label) {
+                // If the user selects a value in the autocomplete dropdown, update the hidden 'select' element.
+                // https://github.com/alphagov/accessible-autocomplete/issues/322
+                var match = [].filter.call(this.selectElement.options, function(e){
+                    return (e.textContent||e.innerText) === label;
+                })[0];
+                if (match) {
+                    match.selected = true;
+                    // Trigger a change event
+                    $this.trigger("change");
+                }
+            }
         });
     });
   },
@@ -754,106 +768,115 @@ $.extend(fixmystreet.set_up, {
       // Internal $context is the individual form with the photo upload inside
       var $context = $(this);
       var $originalLabel = $('[for="form_photo"], .js-photo-label', $context);
-      var $originalInput = $('#form_photos, .js-photo-fields', $context);
-      var $dropzone = $('<div tabindex=0>').addClass('dropzone');
-      var $fileid_input = $originalInput.data('upload-field') || 'upload_fileid';
+      var $originalInputs = $('#form_photos, .js-photo-fields', $context);
+      $originalInputs.each(function() {
+        var $originalInput = $(this);
+        var $dropzone = $('<div tabindex=0>').addClass('dropzone');
+        var $fileid_input = $originalInput.data('upload-field') || 'upload_fileid';
+        var max_photos = !isNaN($originalInput.data('max-photos')) ? $originalInput.data('max-photos') : 3;
 
-      $originalLabel.removeAttr('for');
-      $('[data-plural]', $originalLabel).text(
-          $('[data-plural]', $originalLabel).attr('data-plural')
-      );
-      $originalInput.hide();
+        $originalLabel.removeAttr('for');
+        $('[data-plural]', $originalLabel).text(
+            $('[data-plural]', $originalLabel).attr('data-plural')
+        );
+        $originalInput.hide();
 
-      $dropzone.insertAfter($originalInput);
-      var default_message = translation_strings.upload_default_message;
-      if ($("html").hasClass("mobile")) {
-        default_message = translation_strings.upload_default_message_mobile;
-      }
-      var photodrop = new Dropzone($dropzone[0], {
-        url: '/photo/upload',
-        paramName: 'photo',
-        maxFiles: 3,
-        addRemoveLinks: true,
-        thumbnailHeight: 150,
-        thumbnailWidth: 150,
-        resizeWidth: 2048,
-        resizeHeight: 2048,
-        resizeQuality: 0.6,
-        acceptedFiles: 'image/jpeg,image/pjpeg,image/gif,image/tiff,image/png,.png,.tiff,.tif,.gif,.jpeg,.jpg',
-        dictDefaultMessage: default_message,
-        dictCancelUploadConfirmation: translation_strings.upload_cancel_confirmation,
-        dictInvalidFileType: translation_strings.upload_invalid_file_type,
-        dictMaxFilesExceeded: translation_strings.upload_max_files_exceeded,
-
-        fallback: function() {
-          $dropzone.remove();
-          $originalLabel.attr('for', 'form_photo');
-          $('[data-singular]', $originalLabel).text(
-              $('[data-singular]', $originalLabel).attr('data-singular')
-          );
-          $originalInput.show();
-        },
-        init: function() {
-          this.on("addedfile", function(file) {
-            $('input[type=submit]', $context).prop("disabled", true).removeClass('green-btn');
-          });
-          this.on("queuecomplete", function() {
-            $('input[type=submit]', $context).prop('disabled', false).addClass('green-btn');
-          });
-          this.on("success", function(file, xhrResponse) {
-            var $upload_fileids = $('input[name=' + $fileid_input + ']', $context);
-            var ids = [];
-            // only split if it has a value otherwise you get a spurious empty string
-            // in the array as split returns the whole string if no match
-            if ( $upload_fileids.val() ) {
-                ids = $upload_fileids.val().split(',');
-            }
-            var id = (file.server_id = xhrResponse.id),
-                l = ids.push(id);
-            newstr = ids.join(',');
-            $upload_fileids.val(newstr);
-          });
-          this.on("error", function(file, errorMessage, xhrResponse) {
-          });
-          this.on("removedfile", function(file) {
-            var $upload_fileids = $('input[name=' + $fileid_input + ']', $context);
-            var ids = $upload_fileids.val().split(','),
-                newstr = $.grep(ids, function(n) { return (n!=file.server_id); }).join(',');
-            $upload_fileids.val(newstr);
-          });
-          this.on("maxfilesexceeded", function(file) {
-            this.removeFile(file);
-            var $message = $('<div class="dz-message dz-error-message">');
-            $message.text(translation_strings.upload_max_files_exceeded);
-            $message.prependTo(this.element);
-            setTimeout(function() {
-              $message.slideUp(250, function() {
-                $message.remove();
-              });
-            }, 2000);
-          });
+        $dropzone.insertAfter($originalInput);
+        var default_message = translation_strings.upload_default_message;
+        if ($("html").hasClass("mobile")) {
+            default_message = translation_strings.upload_default_message_mobile;
         }
-      });
+        var photodrop = new Dropzone($dropzone[0], {
+            url: '/photo/upload',
+            paramName: 'photo',
+            maxFiles: max_photos,
+            addRemoveLinks: true,
+            thumbnailHeight: 150,
+            thumbnailWidth: 150,
+            resizeWidth: 2048,
+            resizeHeight: 2048,
+            resizeQuality: 0.6,
+            acceptedFiles: 'image/jpeg,image/pjpeg,image/gif,image/tiff,image/png,.png,.tiff,.tif,.gif,.jpeg,.jpg',
+            dictDefaultMessage: default_message,
+            dictCancelUploadConfirmation: translation_strings.upload_cancel_confirmation,
+            dictInvalidFileType: translation_strings.upload_invalid_file_type,
+            dictMaxFilesExceeded: translation_strings.upload_max_files_exceeded,
 
-      $dropzone.on('keydown', function(e) {
-          if (e.keyCode === 13 || e.keyCode === 32) {
-              $dropzone.trigger('click');
-          }
-      });
-
-      $.each($('input[name=' + $fileid_input + ']', $context).val().split(','), function(i, f) {
-        if (!f) {
-            return;
-        }
-        var mockFile = { name: f, server_id: f, dataURL: '/photo/temp.' + f };
-        photodrop.emit("addedfile", mockFile);
-        photodrop.createThumbnailFromUrl(mockFile,
-            photodrop.options.thumbnailWidth, photodrop.options.thumbnailHeight,
-            photodrop.options.thumbnailMethod, true, function(thumbnail) {
-                photodrop.emit('thumbnail', mockFile, thumbnail);
+            fallback: function() {
+            $dropzone.remove();
+            $originalLabel.attr('for', 'form_photo');
+            $('[data-singular]', $originalLabel).text(
+                $('[data-singular]', $originalLabel).attr('data-singular')
+            );
+            $originalInput.show();
+            },
+            init: function() {
+            this.on("addedfile", function(file) {
+                $('input[type=submit]', $context).prop("disabled", true).removeClass('green-btn');
             });
-        photodrop.emit("complete", mockFile);
-        photodrop.options.maxFiles -= 1;
+            this.on("queuecomplete", function() {
+                $('input[type=submit]', $context).prop('disabled', false).addClass('green-btn');
+            });
+            this.on("success", function(file, xhrResponse) {
+                var $upload_fileids = $('input[name="' + $fileid_input + '"]', $context);
+                var ids = [];
+                // only split if it has a value otherwise you get a spurious empty string
+                // in the array as split returns the whole string if no match
+                if ( $upload_fileids.val() ) {
+                    ids = $upload_fileids.val().split(',');
+                }
+                var id = (file.server_id = xhrResponse.id),
+                    l = ids.push(id);
+                newstr = ids.join(',');
+                $upload_fileids.val(newstr);
+            });
+            this.on("error", function(file, errorMessage, xhrResponse) {
+            });
+            this.on("removedfile", function(file) {
+                var $upload_fileids = $('input[name="' + $fileid_input + '"]', $context);
+                var ids = $upload_fileids.val().split(','),
+                    newstr = $.grep(ids, function(n) { return (n!=file.server_id); }).join(',');
+                $upload_fileids.val(newstr);
+            });
+            this.on("maxfilesexceeded", function(file) {
+                this.removeFile(file);
+                var $message = $('<div class="dz-message dz-error-message">');
+                $message.text(translation_strings.upload_max_files_exceeded);
+                $message.prependTo(this.element);
+                setTimeout(function() {
+                $message.slideUp(250, function() {
+                    $message.remove();
+                });
+                }, 2000);
+            });
+            }
+        });
+
+        // Delete pictures when item is deleted on bulky waste
+        $(this).closest('.bulky-item-wrapper').find('.delete-item').click(function(){
+            photodrop.removeAllFiles(true);
+        });
+
+        $dropzone.on('keydown', function(e) {
+            if (e.keyCode === 13 || e.keyCode === 32) {
+                $dropzone.trigger('click');
+            }
+        });
+
+        $.each($('input[name="' + $fileid_input + '"]', $context).val().split(','), function(i, f) {
+            if (!f) {
+                return;
+            }
+            var mockFile = { name: f, server_id: f, dataURL: '/photo/temp.' + f };
+            photodrop.emit("addedfile", mockFile);
+            photodrop.createThumbnailFromUrl(mockFile,
+                photodrop.options.thumbnailWidth, photodrop.options.thumbnailHeight,
+                photodrop.options.thumbnailMethod, true, function(thumbnail) {
+                    photodrop.emit('thumbnail', mockFile, thumbnail);
+                });
+            photodrop.emit("complete", mockFile);
+            photodrop.options.maxFiles -= 1;
+        });
       });
     });
   },

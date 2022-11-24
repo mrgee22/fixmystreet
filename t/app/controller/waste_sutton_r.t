@@ -1,6 +1,7 @@
 use utf8;
 use JSON::MaybeXS;
 use Path::Tiny;
+use Storable qw(dclone);
 use Test::MockModule;
 use Test::MockTime qw(:all);
 use FixMyStreet::TestMech;
@@ -245,16 +246,59 @@ FixMyStreet::override_config {
         $mech->content_lacks('"container-choice" value="18"');
         $e->mock('GetServiceUnitsForObject', sub { $bin_data });
     };
+
+    subtest 'Okay fetching property with two of the same task type' => sub {
+        my @dupe = @$bin_data;
+        push @dupe, dclone($dupe[0]);
+        # Give the new entry a different ID and task ref
+        $dupe[$#dupe]->{ServiceTasks}{ServiceTask}[0]{Id} = 4001;
+        $dupe[$#dupe]->{ServiceTasks}{ServiceTask}[0]{ServiceTaskSchedules}{ServiceTaskSchedule}{LastInstance}{Ref}{Value}{anyType}[1] = 8281;
+        $e->mock('GetServiceUnitsForObject', sub { \@dupe });
+        $e->mock('GetTasks', sub { [ {
+            Ref => { Value => { anyType => [ 22239416, 8280 ] } },
+            State => { Name => 'Completed' },
+            CompletedDate => { DateTime => '2022-09-09T16:00:00Z' }
+        }, {
+            Ref => { Value => { anyType => [ 22239416, 8281 ] } },
+            State => { Name => 'Outstanding' },
+            CompletedDate => undef
+        } ] });
+        $mech->get_ok('/waste/12345');
+        $mech->content_lacks('assisted collection'); # For below, while we're here
+        $e->mock('GetTasks', sub { [] });
+        $e->mock('GetServiceUnitsForObject', sub { $bin_data });
+    };
+
+    subtest 'Assisted collection display for staff' => sub {
+        $mech->log_in_ok($staff->email);
+        $mech->get_ok('/waste/12345');
+        $mech->content_contains('not set up for assisted collection');
+        my $dupe = dclone($bin_data);
+        # Give the entry an assisted collection
+        $dupe->[0]{Data}{ExtensibleDatum}{DatatypeName} = 'Assisted Collection';
+        $dupe->[0]{Data}{ExtensibleDatum}{Value} = 1;
+        $e->mock('GetServiceUnitsForObject', sub { $dupe });
+        $mech->get_ok('/waste/12345');
+        $mech->content_contains('is set up for assisted collection');
+        $e->mock('GetServiceUnitsForObject', sub { $bin_data });
+    };
 };
 
 FixMyStreet::override_config {
     ALLOWED_COBRANDS => ['kingston', 'sutton'],
+    MAPIT_URL => 'http://mapit.uk/',
 }, sub {
     subtest 'Kingston staff can see Sutton admin' => sub {
         $mech->host('sutton.example.org');
         $mech->log_in_ok($staff->email);
         $mech->get_ok('/admin/reports');
         $mech->follow_link_ok({ text => "Edit" });
+    };
+    subtest 'Kingston staff can see Sutton data on their dashboard' => sub {
+        $mech->host('kingston.example.org');
+        $mech->get_ok('/dashboard?body=' . $body->id);
+        $mech->content_like(qr{<th scope="row">Total</th>\s*<td>4</td>});
+        $mech->submit_form_ok;
     };
 };
 

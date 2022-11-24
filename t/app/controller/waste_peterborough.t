@@ -683,10 +683,82 @@ FixMyStreet::override_config {
 }, sub {
     my ($b, $jobs_fsd_get) = shared_bartec_mocks();
 
+    $body->set_extra_metadata(
+        wasteworks_config => {
+            item_list => [
+                {   bartec_id => '1001',
+                    category  => 'Audio / Visual Elec. equipment',
+                    message   => '',
+                    name      => 'Amplifiers',
+                    price     => '',
+                },
+                {   bartec_id => '1001',
+                    category  => 'Audio / Visual Elec. equipment',
+                    message   => '',
+                    name      => 'DVD/BR Video players',
+                    price     => '',
+                },
+                {   bartec_id => '1001',
+                    category  => 'Audio / Visual Elec. equipment',
+                    message   => '',
+                    name      => 'HiFi Stereos',
+                    price     => '',
+                },
+
+                {   bartec_id => '1002',
+                    category  => 'Baby / Toddler',
+                    message   => '',
+                    name      => 'Childs bed / cot',
+                    price     => '',
+                },
+                {   bartec_id => '1002',
+                    category  => 'Baby / Toddler',
+                    message   => '',
+                    name      => 'High chairs',
+                    price     => '',
+                },
+
+                {   bartec_id => '1003',
+                    category  => 'Bedroom',
+                    message   => '',
+                    name      => 'Chest of drawers',
+                    price     => '',
+                },
+                {   bartec_id => '1003',
+                    category  => 'Bedroom',
+                    message   => 'Please dismantle',
+                    name      => 'Wardrobes',
+                    price     => '',
+                },
+            ],
+        },
+    );
+    $body->update;
+
     subtest 'Bulky goods collection booking' => sub {
         # XXX NB Currently, these tests do not describe the correct
         # behaviour of the system. They are here to remind us to update them as
         # we break them by implementing the correct behaviour :)
+
+        subtest '?type=bulky redirect before any bulky booking made' => sub {
+            $mech->get_ok('/waste?type=bulky');
+            is $mech->uri, 'http://localhost/waste?type=bulky',
+                'No redirect if no address data';
+            $mech->content_contains( 'What is your address?',
+                'user on address page' );
+
+            $mech->submit_form_ok(
+                { with_fields => { postcode => 'PE1 3NA' } } );
+            $mech->submit_form_ok(
+                { with_fields => { address => 'PE1 3NA:100090215480' } } );
+            is $mech->uri,
+                'http://localhost/waste/PE1%203NA:100090215480/bulky',
+                'Redirected to /bulky if address data';
+
+            $mech->get_ok('/waste/PE1%203NA:100090215480');
+            $mech->content_contains( 'None booked',
+                'Bin days page has correct messaging' );
+        };
 
         $mech->get_ok('/waste/PE1%203NA:100090215480');
         $mech->follow_link_ok( { text_regex => qr/Book bulky goods collection/i, }, "follow 'Book bulky...' link" );
@@ -735,14 +807,21 @@ FixMyStreet::override_config {
             $mech->content_contains('Item 3');
             $mech->content_contains('Item 4');
             $mech->content_contains('Item 5');
-            $mech->content_contains('<option value="chair">Armchair</option>');
-            $mech->submit_form_ok({ with_fields => {
-                item1 => 'fridge',
-                item2 => 'chair',
-                item3 => 'sofa',
-                item4 => 'table',
-                item5 => 'fridge',
-            }});
+            $mech->content_like(
+                qr/<option value="Amplifiers".*>Amplifiers<\/option>/);
+
+            $mech->submit_form_ok;
+            $mech->content_contains(
+                'Please select an item');
+
+            $mech->submit_form_ok(
+                {   with_fields => {
+                        'item_1.item' => 'Amplifiers',
+                        'item_2.item' => 'High chairs',
+                        'item_3.item' => 'Wardrobes',
+                    },
+                },
+            );
         };
 
         subtest 'Location details page' => sub {
@@ -756,7 +835,12 @@ FixMyStreet::override_config {
             $mech->content_contains('Submit bulky goods collection booking');
             $mech->content_contains('Please review the information');
             $mech->content_contains('provided before you submit your bulky goods collection booking.');
-            $mech->content_contains('<dd class="govuk-summary-list__value">table</dd>');
+            $mech->content_contains('Please review the information you’ve provided before you submit your bulky goods collection booking.');
+            $mech->content_like(qr/<dd class="govuk-summary-list__value">.*Amplifiers/s);
+            $mech->content_like(qr/<dd class="govuk-summary-list__value">.*High chairs/s);
+            $mech->content_like(qr/<dd class="govuk-summary-list__value">.*Wardrobes/s);
+            # Extra text for wardrobes
+            $mech->content_like(qr/Please dismantle/s);
             $mech->submit_form_ok({ with_fields => { tandc => 1 } });
         };
 
@@ -777,13 +861,26 @@ FixMyStreet::override_config {
             is $report->get_extra_field_value('DATE'), '2022-08-26T00:00:00';
             is $report->get_extra_field_value('CREW NOTES'), 'behind the hedge in the front garden';
             is $report->get_extra_field_value('CHARGEABLE'), 'CHARGED';
-            is $report->get_extra_field_value('ITEM_01'), 'fridge';
-            is $report->get_extra_field_value('ITEM_02'), 'chair';
-            is $report->get_extra_field_value('ITEM_03'), 'sofa';
-            is $report->get_extra_field_value('ITEM_04'), 'table';
-            is $report->get_extra_field_value('ITEM_05'), 'fridge';
+            is $report->get_extra_field_value('ITEM_01'), 'Amplifiers';
+            is $report->get_extra_field_value('ITEM_02'), 'High chairs';
+            is $report->get_extra_field_value('ITEM_03'), 'Wardrobes';
+            is $report->get_extra_field_value('ITEM_04'), '';
+            is $report->get_extra_field_value('ITEM_05'), '';
         };
 
+        subtest '?type=bulky redirect after bulky booking made' => sub {
+            $mech->get_ok('/waste?type=bulky');
+            $mech->content_contains( 'What is your address?',
+                'user on address page' );
+            $mech->submit_form_ok(
+                { with_fields => { postcode => 'PE1 3NA' } } );
+            $mech->submit_form_ok(
+                { with_fields => { address => 'PE1 3NA:100090215480' } } );
+            is $mech->uri,
+                'http://localhost/waste/PE1%203NA:100090215480',
+                'Redirected to waste base page';
+            $mech->content_lacks('None booked');
+        };
     };
 };
 
@@ -805,6 +902,8 @@ FixMyStreet::override_config {
         }
     },
 }, sub {
+    $body->set_extra_metadata( wasteworks_config => undef );
+    $body->update;
 
     subtest 'WasteWorks configuration editing' => sub {
         ok $mech->host('peterborough.fixmystreet.com');

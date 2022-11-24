@@ -25,6 +25,18 @@ around problems_restriction => sub {
     return $rs;
 };
 
+sub problems_on_dashboard {
+    my ($self, $rs) = @_;
+
+    my $bodies = [ $self->body->id ];
+    my $extra = $self->dashboard_extra_bodies;
+    push @$bodies, $extra->id if $extra;
+    $rs = FixMyStreet::DB->resultset('Problem')->to_body($bodies)->search({
+        "me.cobrand_data" => 'waste',
+    });
+    return $rs;
+}
+
 sub open311_extra_data_include {
     my ($self, $row, $h) = @_;
 
@@ -249,6 +261,8 @@ sub service_name_override {
         2249 => "Paper and card",
         2250 => "Mixed recycling",
         2632 => 'Paper and card',
+        3571 => 'Mixed recycling',
+        3576 => 'Non-recyclable Refuse',
         2256 => '', # Deliver refuse bags
         2257 => '', # Deliver recycling bags
     );
@@ -352,6 +366,7 @@ sub bin_services_for_address {
     foreach (@$result) {
         my $servicetasks = $self->_get_service_tasks($_);
         foreach my $task (@$servicetasks) {
+            my $task_id = $task->{Id};
             my $service_id = $task->{TaskTypeId};
             my $service_name = $self->service_name_override($service_id);
             next unless $service_name;
@@ -367,7 +382,7 @@ sub bin_services_for_address {
             my $schedules = _parse_schedules($task, 'task');
 
             next unless $schedules->{next} or $schedules->{last};
-            $schedules{$service_id} = $schedules;
+            $schedules{$task_id} = $schedules;
             push @to_fetch, GetEventsForObject => [ ServiceUnit => $_->{Id} ];
             push @task_refs, $schedules->{last}{ref} if $schedules->{last};
         }
@@ -381,14 +396,20 @@ sub bin_services_for_address {
     my @out;
     my %task_ref_to_row;
     foreach (@$result) {
+        my $data = Integrations::Echo::force_arrayref($_->{Data}, 'ExtensibleDatum');
+        foreach (@$data) {
+            $self->{c}->stash->{assisted_collection} = 1 if $_->{DatatypeName} eq "Assisted Collection" && $_->{Value};
+        }
+
         my $servicetasks = $self->_get_service_tasks($_);
         foreach my $task (@$servicetasks) {
+            my $task_id = $task->{Id};
             my $service_id = $task->{TaskTypeId};
             my $service_name = $self->service_name_override($service_id);
             next unless $service_name;
-            next unless $schedules{$service_id};
+            next unless $schedules{$task_id};
 
-            my $schedules = $schedules{$service_id};
+            my $schedules = $schedules{$task_id};
 
             $self->{c}->stash->{communal_property} = 1 if $service_id == 2243 || $service_id == 2248 || $service_id == 2249 || $service_id == 2250; # Communal
 
@@ -537,6 +558,7 @@ sub _parse_events {
             if ($service_id == 405) {
                 push @{$events->{missed}->{2238}}, $event;
                 push @{$events->{missed}->{2242}}, $event;
+                push @{$events->{missed}->{3576}}, $event;
             } elsif ($service_id == 406) {
                 push @{$events->{missed}->{2243}}, $event;
             } elsif ($service_id == 409) {
@@ -555,6 +577,7 @@ sub _parse_events {
                         push @{$events->{missed}->{2241}}, $event;
                         push @{$events->{missed}->{2246}}, $event;
                         push @{$events->{missed}->{2250}}, $event;
+                        push @{$events->{missed}->{3571}}, $event;
                     } elsif ($_->{DatatypeName} eq 'Food' && $_->{Value} == 1) {
                         push @{$events->{missed}->{2239}}, $event;
                         push @{$events->{missed}->{2248}}, $event;
@@ -813,9 +836,12 @@ sub garden_waste_dd_redirect_url {
 sub garden_waste_dd_check_success {
     my ($self, $c) = @_;
 
+    if ( defined( $c->get_param('stage') ) && $c->get_param('stage') == 0 ) {
+        # something has gone wrong and the form has not recorded correctly
+        $c->forward('direct_debit_error');
+        $c->detach();
     # check if the bank details have been verified
-    my $applied = lc($c->get_param('verificationapplied') || '');
-    if ( $applied eq 'true' ) {
+    } elsif ( $c->get_param('verificationapplied') && lc($c->get_param('verificationapplied')) eq 'true' ) {
         # and if they have and verification has failed then redirect
         # to the cancelled page
         if ( lc $c->get_param('status') eq 'false') {
